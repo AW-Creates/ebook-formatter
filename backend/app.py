@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
 import os
 import tempfile
 import io
@@ -10,9 +11,17 @@ import re
 from generators.epub_generator import generate_epub
 from generators.pdf_generator import generate_pdf  
 from generators.docx_generator import generate_docx
+from generators.document_parser import extract_text_from_file, detect_document_structure
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all domains on all routes
+
+# Configure file uploads
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def home():
@@ -115,6 +124,40 @@ def generate_docx_endpoint():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/upload-document', methods=['POST'])
+def upload_document():
+    """Handle document upload and text extraction"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if not allowed_file(file.filename):
+            return jsonify({'error': 'File type not supported. Please upload .txt, .docx, or .pdf files'}), 400
+        
+        # Read file data
+        file_data = file.read()
+        
+        # Extract text from file
+        extracted_text, file_type = extract_text_from_file(file_data, file.filename)
+        
+        # Analyze document structure
+        structure = detect_document_structure(extracted_text)
+        
+        return jsonify({
+            'text': extracted_text,
+            'file_type': file_type,
+            'filename': file.filename,
+            'structure': structure
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Error processing file: {str(e)}'}), 500
 
 @app.route('/api/templates', methods=['GET'])
 def get_templates():
