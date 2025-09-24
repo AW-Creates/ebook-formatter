@@ -163,7 +163,7 @@ The room was exactly as her grandmother had described it - filled with countless
             <div className="flex bg-gray-100 rounded-md p-1">
               <button
                 onClick={() => setCurrentView('simple')}
-                className={`px-3 py-1 rounded text-sm transition-colors ${
+                className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
                   currentView === 'simple'
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900'
@@ -173,7 +173,7 @@ The room was exactly as her grandmother had described it - filled with countless
               </button>
               <button
                 onClick={() => setCurrentView('advanced')}
-                className={`px-3 py-1 rounded text-sm transition-colors ${
+                className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
                   currentView === 'advanced'
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900'
@@ -192,36 +192,36 @@ The room was exactly as her grandmother had described it - filled with countless
           </div>
 
           {/* Title and Author inputs */}
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <input
               type="text"
               placeholder="Book Title"
               value={bookTitle}
               onChange={(e) => setBookTitle(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <input
               type="text"
               placeholder="Author Name"
               value={author}
               onChange={(e) => setAuthor(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           {/* Simple View Controls */}
           {currentView === 'simple' && (
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 sm:gap-4">
               {/* Template Selector */}
-              <div className="flex items-center gap-2">
-                <label htmlFor="template-select" className="text-sm font-medium text-gray-700">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <label htmlFor="template-select" className="text-sm font-medium text-gray-700 whitespace-nowrap">
                   Style:
                 </label>
                 <select
                   id="template-select"
                   value={selectedTemplate}
                   onChange={(e) => handleTemplateChange(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 sm:flex-initial px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {Object.entries(templates).map(([key, template]) => (
                     <option key={key} value={key}>
@@ -231,23 +231,28 @@ The room was exactly as her grandmother had described it - filled with countless
                 </select>
               </div>
 
-              {/* Sample Text Button */}
-              <button
-                onClick={() => setText(sampleText)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm"
-              >
-                Load Sample Text
-              </button>
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                {/* Sample Text Button */}
+                <button
+                  onClick={() => setText(sampleText)}
+                  className="flex-1 sm:flex-initial px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium"
+                >
+                  Load Sample
+                </button>
 
-              {/* Download Button */}
-              {text.trim() && (
-                <DownloadButton
-                  text={text}
-                  templateName={selectedTemplate}
-                  title={bookTitle}
-                  author={author}
-                />
-              )}
+                {/* Download Button */}
+                {text.trim() && (
+                  <div className="flex-1 sm:flex-initial">
+                    <DownloadButton
+                      text={text}
+                      templateName={selectedTemplate}
+                      title={bookTitle}
+                      author={author}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -261,7 +266,7 @@ The room was exactly as her grandmother had described it - filled with countless
         {/* Layout based on view mode */}
         {currentView === 'simple' ? (
           /* Simple Dual Pane Layout */
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-[600px]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 min-h-[400px] lg:min-h-[600px]">
             {/* Input Pane */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-4 border-b bg-gray-50 rounded-t-lg">
@@ -301,7 +306,7 @@ The room was exactly as her grandmother had described it - filled with countless
           </div>
         ) : (
           /* Advanced Three-Column Layout */
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 min-h-[600px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 min-h-[400px] lg:min-h-[600px]">
             {/* Input Pane */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-4 border-b bg-gray-50 rounded-t-lg">
