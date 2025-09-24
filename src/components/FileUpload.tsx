@@ -36,11 +36,19 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onError }) => 
       const formData = new FormData();
       formData.append('file', file);
 
-      // For development, always use localhost. For production, Vercel will set the env var
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      console.log('Uploading to:', `${apiUrl}/api/upload-document`);
+      // Use relative path for Vercel serverless functions, fallback to localhost for development
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      const apiUrl = isDevelopment 
+        ? (process.env.REACT_APP_API_URL || 'http://localhost:5000')
+        : '';
       
-      const response = await fetch(`${apiUrl}/api/upload-document`, {
+      const uploadUrl = isDevelopment 
+        ? `${apiUrl}/api/upload-document`
+        : '/api/upload-document';
+      
+      console.log('Uploading to:', uploadUrl);
+      
+      const response = await fetch(uploadUrl, {
         method: 'POST',
         body: formData,
       });

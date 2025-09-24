@@ -1,0 +1,171 @@
+const formidable = require('formidable');
+const mammoth = require('mammoth');
+const pdfParse = require('pdf-parse');
+
+// Configure allowed file types and max size
+const ALLOWED_EXTENSIONS = ['txt', 'docx', 'pdf'];
+const MAX_FILE_SIZE = 16 * 1024 * 1024; // 16MB
+
+function allowed_file(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  return ALLOWED_EXTENSIONS.includes(ext);
+}
+
+async function extractTextFromFile(buffer, filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  
+  switch (ext) {
+    case 'txt':
+      return { text: buffer.toString('utf-8'), type: 'text' };
+    
+    case 'docx':
+      try {
+        const result = await mammoth.extractRawText({ buffer });
+        return { text: result.value, type: 'docx' };
+      } catch (error) {
+        throw new Error(`Error processing DOCX file: ${error.message}`);
+      }
+    
+    case 'pdf':
+      try {
+        const data = await pdfParse(buffer);
+        return { text: data.text, type: 'pdf' };
+      } catch (error) {
+        throw new Error(`Error processing PDF file: ${error.message}`);
+      }
+    
+    default:
+      throw new Error(`Unsupported file format: ${ext}`);
+  }
+}
+
+function detectDocumentStructure(text) {
+  const lines = text.split('\n');
+  const structure = {
+    headings: [],
+    quotes: [],
+    lists: [],
+    emphasis: [],
+    total_lines: lines.length,
+    word_count: text.split(/\s+/).filter(word => word.length > 0).length
+  };
+  
+  lines.forEach((line, i) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    
+    // Detect potential headings
+    if (trimmed.length < 80 && (
+      trimmed === trimmed.toUpperCase() ||
+      trimmed.startsWith('Chapter') ||
+      trimmed.startsWith('CHAPTER') ||
+      trimmed.startsWith('Part') ||
+      trimmed.startsWith('PART') ||
+      /^\d+/.test(trimmed.substring(0, 10))
+    )) {
+      structure.headings.push({
+        text: trimmed,
+        line_number: i,
+        type: 'heading'
+      });
+    }
+    
+    // Detect quotes
+    if (trimmed.startsWith('"') || trimmed.startsWith("'") || 
+        trimmed.startsWith('"') || trimmed.startsWith('    ')) {
+      structure.quotes.push({
+        text: trimmed,
+        line_number: i,
+        type: 'quote'
+      });
+    }
+    
+    // Detect lists
+    if (trimmed.startsWith('•') || trimmed.startsWith('*') || 
+        trimmed.startsWith('-') || /^[0-9]+\./.test(trimmed) || 
+        /^[a-z]\./.test(trimmed)) {
+      structure.lists.push({
+        text: trimmed,
+        line_number: i,
+        type: 'list_item'
+      });
+    }
+  });
+  
+  return structure;
+}
+
+export default async function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+  
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    // Parse the multipart form data
+    const form = formidable({
+      maxFileSize: MAX_FILE_SIZE,
+      keepExtensions: true,
+      multiples: false
+    });
+
+    const [fields, files] = await form.parse(req);
+    
+    const file = files.file?.[0];
+    if (!file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    if (!file.originalFilename || file.originalFilename === '') {
+      return res.status(400).json({ error: 'No file selected' });
+    }
+
+    if (!allowed_file(file.originalFilename)) {
+      return res.status(400).json({ 
+        error: 'File type not supported. Please upload .txt, .docx, or .pdf files' 
+      });
+    }
+
+    // Read file data
+    const fs = require('fs');
+    const fileBuffer = fs.readFileSync(file.filepath);
+
+    // Extract text from file
+    const { text: extractedText, type: fileType } = await extractTextFromFile(
+      fileBuffer, 
+      file.originalFilename
+    );
+
+    // Analyze document structure
+    const structure = detectDocumentStructure(extractedText);
+
+    // Clean up temporary file
+    fs.unlinkSync(file.filepath);
+
+    return res.status(200).json({
+      text: extractedText,
+      file_type: fileType,
+      filename: file.originalFilename,
+      structure: structure
+    });
+
+  } catch (error) {
+    console.error('Upload error:', error);
+    return res.status(500).json({ 
+      error: `Error processing file: ${error.message}` 
+    });
+  }
+}
