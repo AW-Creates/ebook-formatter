@@ -1,6 +1,5 @@
 const formidable = require('formidable');
-const mammoth = require('mammoth');
-const pdfParse = require('pdf-parse');
+const fs = require('fs');
 
 // Configure allowed file types and max size
 const ALLOWED_EXTENSIONS = ['txt', 'docx', 'pdf'];
@@ -16,10 +15,16 @@ async function extractTextFromFile(buffer, filename) {
   
   switch (ext) {
     case 'txt':
-      return { text: buffer.toString('utf-8'), type: 'text' };
+      try {
+        return { text: buffer.toString('utf-8'), type: 'text' };
+      } catch (error) {
+        // Fallback to latin-1 if UTF-8 fails
+        return { text: buffer.toString('latin-1'), type: 'text' };
+      }
     
     case 'docx':
       try {
+        const mammoth = require('mammoth');
         const result = await mammoth.extractRawText({ buffer });
         return { text: result.value, type: 'docx' };
       } catch (error) {
@@ -28,6 +33,7 @@ async function extractTextFromFile(buffer, filename) {
     
     case 'pdf':
       try {
+        const pdfParse = require('pdf-parse');
         const data = await pdfParse(buffer);
         return { text: data.text, type: 'pdf' };
       } catch (error) {
@@ -95,7 +101,7 @@ function detectDocumentStructure(text) {
   return structure;
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -116,49 +122,61 @@ export default async function handler(req, res) {
 
   try {
     // Parse the multipart form data
-    const form = formidable({
+    const form = new formidable.IncomingForm({
       maxFileSize: MAX_FILE_SIZE,
       keepExtensions: true,
       multiples: false
     });
 
-    const [fields, files] = await form.parse(req);
+    // Use promise-based parsing
+    const { fields, files } = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) reject(err);
+        else resolve({ fields, files });
+      });
+    });
     
-    const file = files.file?.[0];
+    const file = files.file;
     if (!file) {
       return res.status(400).json({ error: 'No file provided' });
     }
 
-    if (!file.originalFilename || file.originalFilename === '') {
+    // Handle both array and single file cases
+    const uploadedFile = Array.isArray(file) ? file[0] : file;
+    
+    if (!uploadedFile.originalFilename || uploadedFile.originalFilename === '') {
       return res.status(400).json({ error: 'No file selected' });
     }
 
-    if (!allowed_file(file.originalFilename)) {
+    if (!allowed_file(uploadedFile.originalFilename)) {
       return res.status(400).json({ 
         error: 'File type not supported. Please upload .txt, .docx, or .pdf files' 
       });
     }
 
     // Read file data
-    const fs = require('fs');
-    const fileBuffer = fs.readFileSync(file.filepath);
+    const fileBuffer = fs.readFileSync(uploadedFile.filepath);
 
     // Extract text from file
     const { text: extractedText, type: fileType } = await extractTextFromFile(
       fileBuffer, 
-      file.originalFilename
+      uploadedFile.originalFilename
     );
 
     // Analyze document structure
     const structure = detectDocumentStructure(extractedText);
 
     // Clean up temporary file
-    fs.unlinkSync(file.filepath);
+    try {
+      fs.unlinkSync(uploadedFile.filepath);
+    } catch (cleanupError) {
+      console.warn('Failed to cleanup temp file:', cleanupError);
+    }
 
     return res.status(200).json({
       text: extractedText,
       file_type: fileType,
-      filename: file.originalFilename,
+      filename: uploadedFile.originalFilename,
       structure: structure
     });
 

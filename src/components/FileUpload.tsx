@@ -105,9 +105,11 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onError }) => 
   };
 
   return (
-    <div className="file-upload-container">
+    <div className="modern-upload-container">
       <div
-        className={`file-upload-area ${dragOver ? 'drag-over' : ''} ${isUploading ? 'uploading' : ''}`}
+        className={`modern-upload-area ${
+          dragOver ? 'drag-active' : ''
+        } ${isUploading ? 'uploading' : ''}`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -121,85 +123,207 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onError }) => 
           style={{ display: 'none' }}
         />
         
-        {isUploading ? (
-          <div className="upload-status">
-            <div className="animate-spin w-4 h-4 border-b-2 border-blue-600 rounded-full"></div>
-            <p className="text-gray-600 text-sm ml-2">Processing...</p>
-          </div>
-        ) : (
-          <div className="upload-prompt">
-            <svg className="w-5 h-5 text-gray-400 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            <span className="text-sm font-medium text-blue-600 mr-2">
-              Choose File
-            </span>
-            <span className="text-xs text-gray-500">
-              or drag & drop (.txt, .docx, .pdf)
-            </span>
-          </div>
-        )}
+        <div className="upload-content">
+          {isUploading ? (
+            <div className="upload-loading">
+              <div className="modern-spinner"></div>
+              <h4>Processing Document</h4>
+              <p>Extracting text and analyzing structure...</p>
+            </div>
+          ) : (
+            <div className="upload-idle">
+              <div className="upload-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </div>
+              <h4>{dragOver ? 'Drop your document here' : 'Upload Document'}</h4>
+              <p>
+                Drag and drop your file here, or{' '}
+                <span className="upload-link">browse files</span>
+              </p>
+              <div className="supported-formats">
+                <span className="format-badge">TXT</span>
+                <span className="format-badge">DOCX</span>
+                <span className="format-badge">PDF</span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <style>{`
-        .file-upload-container {
-          margin: 0.5rem 0;
+        .modern-upload-container {
+          margin: var(--space-6) 0;
         }
 
-        .file-upload-area {
-          border: 1px solid #d1d5db;
-          border-radius: 0.375rem;
-          padding: 0.75rem 1rem;
+        .modern-upload-area {
+          position: relative;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+          backdrop-filter: blur(10px);
+          border: 2px dashed var(--gray-300);
+          border-radius: var(--radius-xl);
+          padding: var(--space-12);
           text-align: center;
           cursor: pointer;
-          transition: all 0.2s ease;
-          background: #f9fafb;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 44px;
+          transition: all var(--transition-slow);
+          overflow: hidden;
         }
 
-        .file-upload-area:hover {
-          border-color: #3b82f6;
-          background: #f0f9ff;
-          box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        .modern-upload-area::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);
+          opacity: 0;
+          transition: opacity var(--transition);
+          z-index: 0;
         }
 
-        .file-upload-area.drag-over {
-          border-color: #3b82f6;
-          background: #dbeafe;
-          transform: scale(1.01);
+        .modern-upload-area:hover {
+          border-color: var(--primary-400);
+          transform: translateY(-2px);
+          box-shadow: var(--shadow-xl);
         }
 
-        .file-upload-area.uploading {
-          border-color: #10b981;
-          background: #f0fdf4;
+        .modern-upload-area:hover::before {
+          opacity: 0.5;
+        }
+
+        .modern-upload-area.drag-active {
+          border-color: var(--primary-500);
+          background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);
+          transform: scale(1.02);
+          box-shadow: var(--shadow-2xl);
+        }
+
+        .modern-upload-area.uploading {
+          border-color: var(--success-400);
+          background: linear-gradient(135deg, var(--success-50) 0%, var(--success-100) 100%);
           cursor: not-allowed;
         }
 
-        .upload-status {
+        .upload-content {
+          position: relative;
+          z-index: 1;
+        }
+
+        .upload-icon {
+          width: 64px;
+          height: 64px;
+          margin: 0 auto var(--space-4);
+          background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+          border-radius: var(--radius-xl);
           display: flex;
           align-items: center;
           justify-content: center;
+          color: white;
+          transition: all var(--transition);
         }
 
-        .upload-prompt {
-          color: #4b5563;
+        .modern-upload-area:hover .upload-icon {
+          transform: scale(1.1) rotate(5deg);
+          box-shadow: var(--shadow-lg);
+        }
+
+        .upload-icon svg {
+          width: 32px;
+          height: 32px;
+        }
+
+        .upload-idle h4 {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: var(--gray-900);
+          margin: 0 0 var(--space-2) 0;
+        }
+
+        .upload-idle p {
+          font-size: 0.875rem;
+          color: var(--gray-600);
+          margin: 0 0 var(--space-4) 0;
+          line-height: 1.5;
+        }
+
+        .upload-link {
+          color: var(--primary-600);
+          font-weight: 500;
+          text-decoration: underline;
+          text-underline-offset: 2px;
+        }
+
+        .supported-formats {
           display: flex;
-          align-items: center;
-          flex-wrap: wrap;
           justify-content: center;
+          gap: var(--space-2);
+          margin-top: var(--space-4);
         }
 
-        @media (max-width: 640px) {
-          .file-upload-area {
-            padding: 0.75rem;
-            min-height: 50px;
+        .format-badge {
+          padding: var(--space-1) var(--space-3);
+          background: var(--gray-100);
+          color: var(--gray-600);
+          font-size: 0.75rem;
+          font-weight: 500;
+          border-radius: var(--radius);
+          border: 1px solid var(--gray-200);
+        }
+
+        .upload-loading {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .upload-loading h4 {
+          font-size: 1.125rem;
+          font-weight: 600;
+          color: var(--gray-900);
+          margin: var(--space-4) 0 var(--space-2) 0;
+        }
+
+        .upload-loading p {
+          font-size: 0.875rem;
+          color: var(--gray-600);
+          margin: 0;
+        }
+
+        .modern-spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid var(--gray-200);
+          border-top: 3px solid var(--primary-500);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+          .modern-upload-area {
+            padding: var(--space-8);
+            margin: var(--space-4) 0;
           }
-          .upload-prompt {
-            flex-direction: column;
-            gap: 0.25rem;
+          
+          .upload-icon {
+            width: 48px;
+            height: 48px;
+          }
+          
+          .upload-icon svg {
+            width: 24px;
+            height: 24px;
+          }
+          
+          .supported-formats {
+            flex-wrap: wrap;
           }
         }
       `}</style>
