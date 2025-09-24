@@ -115,19 +115,19 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onError }) => 
         
         {isUploading ? (
           <div className="upload-status">
-            <div className="animate-spin w-5 h-5 border-b-2 border-blue-600 rounded-full"></div>
+            <div className="animate-spin w-4 h-4 border-b-2 border-blue-600 rounded-full"></div>
             <p className="text-gray-600 text-sm ml-2">Processing...</p>
           </div>
         ) : (
           <div className="upload-prompt">
-            <svg className="w-6 h-6 text-gray-400 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg className="w-5 h-5 text-gray-400 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
-            <span className="text-sm font-medium text-gray-700 mr-2">
-              Upload Document
+            <span className="text-sm font-medium text-blue-600 mr-2">
+              Choose File
             </span>
             <span className="text-xs text-gray-500">
-              (.txt, .docx, .pdf)
+              or drag & drop (.txt, .docx, .pdf)
             </span>
           </div>
         )}
@@ -139,27 +139,29 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onError }) => 
         }
 
         .file-upload-area {
-          border: 2px dashed #d1d5db;
-          border-radius: 0.5rem;
-          padding: 1rem;
+          border: 1px solid #d1d5db;
+          border-radius: 0.375rem;
+          padding: 0.75rem 1rem;
           text-align: center;
           cursor: pointer;
           transition: all 0.2s ease;
-          background: #fafafa;
+          background: #f9fafb;
           display: flex;
           align-items: center;
           justify-content: center;
-          min-height: 60px;
+          min-height: 44px;
         }
 
         .file-upload-area:hover {
           border-color: #3b82f6;
-          background: #f8faff;
+          background: #f0f9ff;
+          box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
         }
 
         .file-upload-area.drag-over {
           border-color: #3b82f6;
-          background: #eff6ff;
+          background: #dbeafe;
+          transform: scale(1.01);
         }
 
         .file-upload-area.uploading {

@@ -27,6 +27,7 @@ const App: React.FC = () => {
   const [author, setAuthor] = useState<string>('Anonymous');
   const [currentView, setCurrentView] = useState<'simple' | 'advanced'>('simple');
   const [uploadError, setUploadError] = useState<string>('');
+  const [uploadSuccess, setUploadSuccess] = useState<string>('');
   const [documentStructure, setDocumentStructure] = useState<any>(null);
   
   // Font styles for different elements
@@ -95,6 +96,8 @@ const App: React.FC = () => {
     setText(extractedText);
     setDocumentStructure(structure);
     setUploadError('');
+    setUploadSuccess(`✅ Successfully loaded "${filename}"`);
+    setTimeout(() => setUploadSuccess(''), 4000); // Clear success after 4 seconds
     
     // Extract title from filename if not set
     if (bookTitle === 'Untitled Book') {
@@ -105,6 +108,7 @@ const App: React.FC = () => {
 
   const handleFileError = (error: string) => {
     setUploadError(error);
+    setUploadSuccess(''); // Clear any success message
     setTimeout(() => setUploadError(''), 5000); // Clear error after 5 seconds
   };
 
@@ -155,6 +159,13 @@ The room was exactly as her grandmother had described it - filled with countless
           {uploadError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
               <p className="text-sm">{uploadError}</p>
+            </div>
+          )}
+          
+          {/* Success Display */}
+          {uploadSuccess && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
+              <p className="text-sm">{uploadSuccess}</p>
             </div>
           )}
 
@@ -274,7 +285,7 @@ The room was exactly as her grandmother had described it - filled with countless
                   Your Text
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  Paste your book content here or upload a document.
+                  {text.trim() ? 'Edit your content below or upload a new document.' : 'Paste your book content here or upload a document.'}
                 </p>
               </div>
               <div className="p-4">
