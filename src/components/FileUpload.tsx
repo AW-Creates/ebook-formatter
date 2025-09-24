@@ -154,19 +154,19 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onError }) => 
 
       <style>{`
         .modern-upload-container {
-          margin: var(--space-6) 0;
+          margin: var(--space-6, 1.5rem) 0;
         }
 
         .modern-upload-area {
           position: relative;
           background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
           backdrop-filter: blur(10px);
-          border: 2px dashed var(--gray-300);
-          border-radius: var(--radius-xl);
-          padding: var(--space-12);
+          border: 2px dashed var(--gray-300, #d1d5db);
+          border-radius: var(--radius-xl, 1rem);
+          padding: var(--space-12, 3rem);
           text-align: center;
           cursor: pointer;
-          transition: all var(--transition-slow);
+          transition: all var(--transition-slow, 300ms cubic-bezier(0.4, 0, 0.2, 1));
           overflow: hidden;
         }
 
