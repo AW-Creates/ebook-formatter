@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import './styles/modern.css';
 import { parseText } from './utils/textParser';
@@ -7,6 +7,7 @@ import PreviewPane from './components/PreviewPane';
 import DownloadButton from './components/DownloadButton';
 import FileUpload from './components/FileUpload';
 import FontControls from './components/FontControls';
+import ImageUpload from './components/ImageUpload';
 
 interface FontStyle {
   fontFamily: string;
@@ -31,6 +32,9 @@ const App: React.FC = () => {
   const [uploadSuccess, setUploadSuccess] = useState<string>('');
   const [documentStructure, setDocumentStructure] = useState<any>(null);
   const [advancedTab, setAdvancedTab] = useState<'editor' | 'typography'>('editor');
+  const [uploadedImages, setUploadedImages] = useState<Record<string, string>>({});
+  const [cursorPosition, setCursorPosition] = useState<number>(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   // Font styles for different elements
   const [fontStyles, setFontStyles] = useState<Record<string, FontStyle>>({
@@ -119,6 +123,46 @@ const App: React.FC = () => {
       ...prev,
       [elementType]: newStyle
     }));
+  };
+
+  const handleCursorPositionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setText(e.target.value);
+    setCursorPosition(e.target.selectionStart);
+  };
+
+  const handleTextareaClick = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+    const target = e.target as HTMLTextAreaElement;
+    setCursorPosition(target.selectionStart);
+  };
+
+  const handleImageInsert = (imageData: string, filename: string, isFullPage: boolean) => {
+    // Store the image data
+    setUploadedImages(prev => ({
+      ...prev,
+      [filename]: imageData
+    }));
+
+    // Create the appropriate placeholder
+    const placeholder = isFullPage ? `[FULLPAGE:${filename}]` : `[IMAGE:${filename}]`;
+    
+    // Insert at cursor position
+    const beforeCursor = text.substring(0, cursorPosition);
+    const afterCursor = text.substring(cursorPosition);
+    const newText = beforeCursor + '\n' + placeholder + '\n' + afterCursor;
+    
+    setText(newText);
+    
+    // Update cursor position to be after the inserted text
+    const newCursorPosition = cursorPosition + placeholder.length + 2; // +2 for the newlines
+    setCursorPosition(newCursorPosition);
+    
+    // Focus the textarea and set cursor position
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+      }
+    }, 100);
   };
 
   const sampleText = `My Amazing Novel
@@ -387,8 +431,11 @@ The room was exactly as her grandmother had described it - filled with countless
               <div className="card-content pt-0">
                 <div className="relative">
                   <textarea
+                    ref={textareaRef}
                     value={text}
-                    onChange={(e) => setText(e.target.value)}
+                    onChange={handleCursorPositionChange}
+                    onClick={handleTextareaClick}
+                    onKeyUp={(e) => setCursorPosition((e.target as HTMLTextAreaElement).selectionStart)}
                     placeholder="Chapter 1\nThe Beginning\n\nIt was a dark and stormy night...\n\n[IMAGE:chapter1.jpg]\n\nThe story continues here..."
                     className="w-full min-h-[500px] max-h-[800px] p-4 border-0 resize-y focus:outline-none focus:ring-0 text-sm leading-relaxed transition-all bg-transparent"
                     style={{ 
@@ -399,6 +446,18 @@ The room was exactly as her grandmother had described it - filled with countless
                   <div className="absolute bottom-4 right-4 text-xs text-gray-400 bg-white/90 backdrop-blur-sm px-2 py-1 rounded border border-gray-200 shadow-sm">
                     {text.split('\n').length} lines
                   </div>
+                </div>
+                
+                {/* Compact Image Upload for Simple Mode */}
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium text-gray-700">Add Images</h4>
+                    <span className="text-xs text-gray-500">Cursor: {cursorPosition}</span>
+                  </div>
+                  <ImageUpload 
+                    onImageInsert={handleImageInsert}
+                    disabled={false}
+                  />
                 </div>
               </div>
             </div>
@@ -428,6 +487,7 @@ The room was exactly as her grandmother had described it - filled with countless
                     content={parsedContent}
                     template={selectedTemplate}
                     customStyles={fontStyles}
+                    uploadedImages={uploadedImages}
                   />
                 </div>
               </div>
@@ -486,8 +546,11 @@ The room was exactly as her grandmother had described it - filled with countless
                       </div>
                       
                       <textarea
+                        ref={textareaRef}
                         value={text}
-                        onChange={(e) => setText(e.target.value)}
+                        onChange={handleCursorPositionChange}
+                        onClick={handleTextareaClick}
+                        onKeyUp={(e) => setCursorPosition((e.target as HTMLTextAreaElement).selectionStart)}
                         placeholder="Chapter 1\nThe Beginning\n\n[FULLPAGE:chapter1-cover.jpg]\n\nIt was a dark and stormy night...\n\nYour story continues here..."
                         className="w-full min-h-[400px] max-h-[600px] p-4 border border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm leading-relaxed transition-all"
                         style={{ 
@@ -495,6 +558,72 @@ The room was exactly as her grandmother had described it - filled with countless
                           height: Math.max(400, Math.min(600, (text.split('\n').length * 22) + 80)) + 'px'
                         }}
                       />
+                      
+                      {/* Image Upload Section */}
+                      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-900 mb-1">Insert Images</h4>
+                            <p className="text-xs text-gray-600">Upload and insert images at your cursor position</p>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Position: {cursorPosition}
+                          </div>
+                        </div>
+                        <ImageUpload 
+                          onImageInsert={handleImageInsert}
+                          disabled={false}
+                        />
+                        
+                        {/* Uploaded Images Manager */}
+                        {Object.keys(uploadedImages).length > 0 && (
+                          <div className="mt-4 pt-4 border-t border-blue-200">
+                            <h5 className="text-xs font-medium text-gray-700 mb-2">Uploaded Images ({Object.keys(uploadedImages).length})</h5>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                              {Object.entries(uploadedImages).map(([filename, imageData]) => (
+                                <div key={filename} className="group relative">
+                                  <div className="aspect-square bg-gray-100 rounded border overflow-hidden">
+                                    <img 
+                                      src={imageData} 
+                                      alt={filename}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
+                                    <div className="flex gap-1">
+                                      <button
+                                        onClick={() => {
+                                          const placeholder = `[IMAGE:${filename}]`;
+                                          const beforeCursor = text.substring(0, cursorPosition);
+                                          const afterCursor = text.substring(cursorPosition);
+                                          setText(beforeCursor + '\n' + placeholder + '\n' + afterCursor);
+                                        }}
+                                        className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
+                                        title="Insert as inline image"
+                                      >
+                                        Inline
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          const placeholder = `[FULLPAGE:${filename}]`;
+                                          const beforeCursor = text.substring(0, cursorPosition);
+                                          const afterCursor = text.substring(cursorPosition);
+                                          setText(beforeCursor + '\n' + placeholder + '\n' + afterCursor);
+                                        }}
+                                        className="px-2 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700"
+                                        title="Insert as full-page image"
+                                      >
+                                        Full
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-gray-600 mt-1 truncate" title={filename}>{filename}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       
                       {/* Quick Actions */}
                       <div className="mt-4 p-4 bg-gray-50 rounded-lg">
@@ -590,6 +719,7 @@ The room was exactly as her grandmother had described it - filled with countless
                     content={parsedContent}
                     template={selectedTemplate}
                     customStyles={fontStyles}
+                    uploadedImages={uploadedImages}
                   />
                 </div>
               </div>

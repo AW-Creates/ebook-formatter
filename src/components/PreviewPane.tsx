@@ -1,26 +1,14 @@
 import React from 'react';
-import { ContentBlock } from '../utils/textParser';
 import { templates } from '../styles/templates';
 
-interface FontStyle {
-  fontFamily: string;
-  fontSize: string;
-  fontWeight: string;
-  color: string;
-  lineHeight: string;
-  letterSpacing: string;
-  textAlign: string;
-  marginTop: string;
-  marginBottom: string;
-}
-
 interface PreviewPaneProps {
-  content: ContentBlock[];
+  content: any[];
   template: string;
-  customStyles?: Record<string, FontStyle>;
+  customStyles?: Record<string, any>;
+  uploadedImages?: Record<string, string>;
 }
 
-const PreviewPane: React.FC<PreviewPaneProps> = ({ content, template, customStyles }) => {
+const PreviewPane: React.FC<PreviewPaneProps> = ({ content, template, customStyles, uploadedImages = {} }) => {
   const templateStyle = templates[template];
 
   if (!templateStyle) {
@@ -82,18 +70,40 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({ content, template, customStyl
               </h1>
             ) : block.type === 'image' ? (
               <div className={`image-container ${block.fullPage ? 'full-page-image' : 'inline-image'}`}>
-                <div className="image-placeholder">
-                  <div className="image-icon">
-                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                {uploadedImages[block.imageUrl] ? (
+                  // Display actual uploaded image
+                  <div className="uploaded-image">
+                    <img 
+                      src={uploadedImages[block.imageUrl]} 
+                      alt={block.imageAlt || block.imageUrl}
+                      className={`uploaded-image-display ${
+                        block.fullPage 
+                          ? 'w-full h-auto max-h-[400px] object-contain border-2 border-purple-200 rounded-lg' 
+                          : 'max-w-full h-auto max-h-[200px] object-contain border border-gray-200 rounded'
+                      }`}
+                    />
+                    <div className={`image-caption text-center mt-2 ${
+                      block.fullPage ? 'text-sm font-medium text-purple-700' : 'text-xs text-gray-600'
+                    }`}>
+                      {block.fullPage ? `Full Page: ${block.imageUrl}` : `Inline: ${block.imageUrl}`}
+                    </div>
                   </div>
-                  <div className="image-info">
-                    <p className="image-title">{block.fullPage ? 'Full Page Image' : 'Inline Image'}</p>
-                    <p className="image-filename">{block.imageUrl}</p>
-                    <p className="image-alt">{block.imageAlt}</p>
+                ) : (
+                  // Display placeholder if image not found
+                  <div className="image-placeholder">
+                    <div className="image-icon">
+                      <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div className="image-info">
+                      <p className="image-title">{block.fullPage ? 'Full Page Image' : 'Inline Image'}</p>
+                      <p className="image-filename">{block.imageUrl}</p>
+                      <p className="image-alt">{block.imageAlt}</p>
+                      <p className="text-xs text-red-500 mt-1">Image not uploaded</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ) : (
               <p className="paragraph">
