@@ -35,6 +35,7 @@ const App: React.FC = () => {
   const [cursorPosition, setCursorPosition] = useState<number>(0);
   const [workflowStep, setWorkflowStep] = useState<'upload' | 'template' | 'customize' | 'preview' | 'export'>('upload');
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const toast = useToast();
   
@@ -207,392 +208,331 @@ The room was exactly as her grandmother had described it - filled with countless
     );
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      if (content) {
+        setText(content);
+        toast.showSuccess(
+          'File uploaded successfully!',
+          `Loaded "${file.name}" with ${content.split('\n').length} lines.`
+        );
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleDownload = () => {
+    if (!text.trim()) {
+      toast.showError('No content to download', 'Please upload or enter some content first.');
+      return;
+    }
+
+    // Create a simple text file download
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${bookTitle || 'formatted-book'}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    toast.showSuccess(
+      'Download started!',
+      `Your formatted book "${bookTitle}" has been downloaded.`
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-primary-50 to-secondary-50">
-      {/* Premium Brand Header */}
-      <header className="brand-header relative">
-        <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between py-8">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="brand-logo">Manuscript Studio</h1>
-                <p className="brand-tagline">Turn raw manuscripts into publish-ready ebooks in minutes</p>
-              </div>
+    <div className="min-h-screen bg-[#1A1A1A] text-gray-200 flex flex-col font-sans relative">
+      {/* Dark Theme Header */}
+      <header className="dark-header">
+        <div className="flex items-center justify-between px-8 py-5">
+          <div className="flex items-center gap-3">
+            {/* Brand Logo */}
+            <div className="h-8 w-8 rounded-xl bg-cyan-400 grid place-items-center text-black font-extrabold">
+              Ef
             </div>
+            <h1 className="brand-logo">Ebook Formatter</h1>
             
-            <div className="hidden lg:flex items-center gap-8">
-              <div className="flex items-center gap-6 text-white/90">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-sm font-medium">Professional Quality</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <span className="text-sm font-medium">Instant Preview</span>
-                </div>
-              </div>
-              
-              <button className="btn-premium btn-outline bg-white/10 border-white/30 text-white hover:bg-white/20">
-                Start Free Trial
-              </button>
+            {/* Light/Dark Toggle */}
+            <div className="hidden sm:flex items-center gap-2 text-xs text-gray-400 border border-gray-700 rounded-xl p-1 ml-3">
+              <button className="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 transition">Dark</button>
+              <button className="px-3 py-1.5 rounded-lg hover:bg-gray-700 transition">Light</button>
             </div>
           </div>
+          
+          <nav className="space-x-8 text-sm font-medium">
+            <a href="#" className="hover:text-cyan-400 transition">Pricing</a>
+            <a href="#" className="hover:text-cyan-400 transition">Docs</a>
+            <a href="#" className="hover:text-cyan-400 transition">Help</a>
+            <a href="#" className="hover:text-cyan-400 transition">Login</a>
+          </nav>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
-        {/* Onboarding Hero Section */}
-        {showOnboarding && (
-          <div className="text-center mb-12">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="font-serif text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-                Transform Your Manuscript Into a <span className="text-purple-600">Professional Ebook</span>
-              </h2>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                Upload your raw manuscript and watch it transform into a beautifully formatted, 
-                publish-ready ebook in minutes. No design skills required.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-                <button 
-                  onClick={() => setShowOnboarding(false)}
-                  className="btn-premium btn-primary px-8 py-4 text-lg"
-                >
-                  Get Started Free
-                </button>
-                <button 
-                  onClick={handleSampleText}
-                  className="btn-premium btn-outline px-8 py-4 text-lg"
-                >
-                  Try Sample Content
-                </button>
-              </div>
-              
-              <div className="grid md:grid-cols-3 gap-6 mt-12">
-                <div className="text-center p-6">
-                  <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold text-lg text-gray-900 mb-2">Upload Anything</h3>
-                  <p className="text-gray-600">Word docs, text files, or paste directly. We'll handle the rest.</p>
-                </div>
-                
-                <div className="text-center p-6">
-                  <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5H9a2 2 0 00-2 2v12a4 4 0 004 4h10a2 2 0 002-2V7a2 2 0 00-2-2z" />
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold text-lg text-gray-900 mb-2">Choose Template</h3>
-                  <p className="text-gray-600">Professional templates for every genre and style.</p>
-                </div>
-                
-                <div className="text-center p-6">
-                  <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold text-lg text-gray-900 mb-2">Download Ready</h3>
-                  <p className="text-gray-600">Export as PDF, EPUB, or DOCX. Ready for publishing platforms.</p>
-                </div>
-              </div>
-            </div>
+      {/* Plan Ribbon / Upgrade CTA */}
+      <div className="sticky top-[68px] z-30 border-b border-gray-800 bg-gradient-to-r from-[#1E1E1E] to-[#1E1E1E]/60">
+        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between text-sm">
+          <div className="text-gray-400">
+            You're on <span className="text-gray-200 font-medium">Free</span> • Pro unlocks additional templates, DOCX export, and brand presets.
           </div>
-        )}
-
-        {/* Upload Section */}
-        <div className="premium-card mb-8">
-          <div className="premium-card-header">
-            <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">
-              📄 Upload Your Manuscript
-            </h2>
-            <p className="text-gray-600">
-              Start by uploading your document or pasting your content directly
-            </p>
-          </div>
-          <div className="premium-card-content">
-            <div className="grid lg:grid-cols-2 gap-8">
-              <div>
-                <FileUpload 
-                  onFileProcessed={handleFileProcessed}
-                  onError={handleFileError}
-                />
-                
-                <div className="mt-6">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Book Title
-                      </label>
-                      <input
-                        type="text"
-                        value={bookTitle}
-                        onChange={(e) => setBookTitle(e.target.value)}
-                        placeholder="My Amazing Novel"
-                        className="premium-input w-full"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Author Name
-                      </label>
-                      <input
-                        type="text"
-                        value={author}
-                        onChange={(e) => setAuthor(e.target.value)}
-                        placeholder="Jane Doe"
-                        className="premium-input w-full"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <button 
-                  onClick={handleSampleText}
-                  className="btn-premium btn-outline w-full py-4"
-                >
-                  <div className="flex items-center justify-center gap-3">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    Try with Sample Content
-                  </div>
-                </button>
-                
-                {text.trim() && (
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-emerald-800 mb-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Content Ready!
-                    </div>
-                    <div className="text-sm text-emerald-700">
-                      <p><strong>{text.length.toLocaleString()}</strong> characters</p>
-                      <p><strong>{text.split('\n').length.toLocaleString()}</strong> lines</p>
-                      <p><strong>{parsedContent.length}</strong> content blocks detected</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500 line-through mr-1">$19</span>
+            <span className="text-cyan-300">$12/mo</span>
+            <button className="ml-3 px-4 py-2 rounded-xl bg-cyan-400 text-black font-semibold hover:bg-cyan-300 transition">
+              Upgrade to Pro
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Template Selection */}
-        {text.trim() && (
-          <div className="premium-card mb-8">
-            <div className="premium-card-header">
-              <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">
-                🎨 Choose Your Template
-              </h2>
-              <p className="text-gray-600">
-                Select a professional template that matches your content style
-              </p>
-            </div>
-            <div className="premium-card-content">
-              <TemplateShowcase 
-                selectedTemplate={selectedTemplate}
-                onSelectTemplate={handleTemplateChange}
-                showDescription={false}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Content Editor and Preview */}
-        {text.trim() && (
-          <div className="premium-card mb-8">
-            <div className="premium-card-header">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">
-                    🚀 Edit & Preview
-                  </h2>
-                  <p className="text-gray-600">
-                    Make final adjustments and see your formatted ebook
-                  </p>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="flex bg-gray-100 rounded-lg p-1">
-                    <button
-                      onClick={() => setCurrentView('simple')}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                        currentView === 'simple'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      Simple
-                    </button>
-                    <button
-                      onClick={() => setCurrentView('advanced')}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                        currentView === 'advanced'
-                          ? 'bg-white text-gray-900 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      Advanced
-                    </button>
-                  </div>
+      {/* Main Content - Split Panel Design */}
+      <main className="flex flex-1 flex-col items-center justify-center px-6 py-12">
+        <div className="w-full max-w-6xl bg-[#232323] rounded-3xl border border-gray-700 shadow-2xl p-12 grid grid-cols-1 lg:grid-cols-2 gap-10">
+          
+          {/* Left Panel - Controls */}
+          <div className="space-y-8">
+            {/* Upload Section */}
+            <div className="space-y-4">
+              <h3 className="text-2xl font-bold text-white mb-6">Format Your Manuscript</h3>
+              
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-300">Upload File</label>
+                <div className="space-y-3">
+                  <input
+                    type="file"
+                    accept=".txt,.docx,.doc,.pdf"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    className="flex items-center justify-center w-full py-4 border-2 border-dashed border-cyan-400 rounded-xl cursor-pointer hover:border-cyan-300 transition-colors group"
+                  >
+                    <div className="text-center">
+                      <svg className="mx-auto h-8 w-8 text-cyan-400 group-hover:text-cyan-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <p className="text-cyan-400 group-hover:text-cyan-300 font-medium">Upload file or drag & drop</p>
+                      <p className="text-gray-400 text-xs mt-1">TXT, DOCX, DOC, PDF up to 10MB</p>
+                    </div>
+                  </label>
                   
-                  {text.trim() && (
-                    <DownloadButton
-                      text={text}
-                      templateName={selectedTemplate}
-                      title={bookTitle}
-                      author={author}
-                    />
-                  )}
+                  <div className="text-center text-gray-400">or</div>
+                  
+                  <button
+                    onClick={handleSampleText}
+                    className="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-xl transition-colors"
+                  >
+                    Try Sample Content
+                  </button>
                 </div>
               </div>
+              
+              {/* Template Selection */}
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-300">Choose Template</label>
+                <select 
+                  value={selectedTemplate} 
+                  onChange={(e) => setSelectedTemplate(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
+                >
+                  <option value="modern">Modern Fiction</option>
+                  <option value="classic">Classic Literature</option>
+                  <option value="academic">Academic Paper</option>
+                  <option value="non-fiction">Non-Fiction</option>
+                </select>
+              </div>
+              
+              {/* Advanced Options Toggle */}
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="advanced-mode"
+                  checked={showAdvanced}
+                  onChange={(e) => setShowAdvanced(e.target.checked)}
+                  className="w-4 h-4 text-cyan-400 bg-gray-800 border-gray-600 rounded focus:ring-cyan-400 focus:ring-2"
+                />
+                <label htmlFor="advanced-mode" className="text-sm font-medium text-gray-300">
+                  Advanced formatting options
+                </label>
+              </div>
+              
+              {/* Download Button */}
+              <div className="pt-6">
+                <button
+                  onClick={handleDownload}
+                  disabled={!text.trim()}
+                  className="w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-600 text-white font-bold rounded-xl transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
+                >
+                  {text.trim() ? 'Download Formatted Book' : 'Upload content to continue'}
+                </button>
+              </div>
             </div>
-            <div className="premium-card-content">
-              {currentView === 'simple' ? (
-                /* Simple Two-Column Layout */
-                <div className="grid lg:grid-cols-2 gap-8">
-                  {/* Content Editor */}
-                  <div>
-                    <h3 className="font-semibold text-lg text-gray-900 mb-3">Content Editor</h3>
-                    <textarea
-                      ref={textareaRef}
-                      value={text}
-                      onChange={handleCursorPositionChange}
-                      onClick={handleTextareaClick}
-                      onKeyUp={(e) => setCursorPosition((e.target as HTMLTextAreaElement).selectionStart)}
-                      placeholder="Chapter 1\nThe Beginning\n\nIt was a dark and stormy night..."
-                      className="premium-input premium-textarea w-full min-h-[400px]"
-                    />
-                    <div className="text-xs text-gray-500 mt-2">
-                      {text.split('\n').length} lines | {text.length} characters | Cursor: {cursorPosition}
-                    </div>
+          </div>
+          
+          {/* Right Panel - Live Preview */}
+          <div className="bg-gray-800 rounded-2xl p-8 border border-gray-600">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">Live Preview</h3>
+              <div className="flex items-center space-x-2 text-sm text-gray-400">
+                <span>Theme:</span>
+                <span className="capitalize text-cyan-400">{selectedTemplate}</span>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-8 min-h-[500px] shadow-inner overflow-auto">
+              {text.trim() ? (
+                <div 
+                  className={`prose prose-lg max-w-none ${
+                    selectedTemplate === 'classic' ? 'font-serif' : 'font-sans'
+                  }`}
+                  style={{
+                    fontFamily: selectedTemplate === 'classic' ? 'Georgia, serif' : 
+                               selectedTemplate === 'academic' ? 'Times New Roman, serif' :
+                               'system-ui, sans-serif'
+                  }}
+                >
+                  {text.split('\n\n').map((paragraph, index) => {
+                    // Handle chapter titles
+                    if (paragraph.toLowerCase().startsWith('chapter ')) {
+                      return (
+                        <h2 key={index} className="text-2xl font-bold mb-6 mt-8 first:mt-0 text-center">
+                          {paragraph}
+                        </h2>
+                      );
+                    }
                     
-                    {/* Image Upload */}
-                    <div className="mt-4">
-                      <h4 className="font-semibold text-sm text-gray-900 mb-2">Add Images</h4>
-                      <ImageUpload 
-                        onImageInsert={handleImageInsert}
-                        disabled={false}
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Live Preview */}
-                  <div>
-                    <h3 className="font-semibold text-lg text-gray-900 mb-3">Live Preview</h3>
-                    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-                      <PreviewPane 
-                        content={parsedContent}
-                        template={selectedTemplate}
-                        customStyles={fontStyles}
-                        uploadedImages={uploadedImages}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                /* Advanced Mode with Tabs */
-                <div className="grid lg:grid-cols-2 gap-8">
-                  {/* Tabbed Left Panel */}
-                  <div className="border border-gray-200 rounded-lg overflow-hidden">
-                    {/* Tab Navigation */}
-                    <div className="border-b border-gray-200 bg-gray-50">
-                      <nav className="flex" aria-label="Tabs">
-                        <button
-                          onClick={() => setAdvancedTab('editor')}
-                          className={`flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm transition-colors ${
-                            advancedTab === 'editor'
-                              ? 'border-purple-500 text-purple-600 bg-white'
-                              : 'border-transparent text-gray-500 hover:text-gray-700'
-                          }`}
-                        >
-                          Content Editor
-                        </button>
-                        <button
-                          onClick={() => setAdvancedTab('typography')}
-                          className={`flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm transition-colors ${
-                            advancedTab === 'typography'
-                              ? 'border-purple-500 text-purple-600 bg-white'
-                              : 'border-transparent text-gray-500 hover:text-gray-700'
-                          }`}
-                        >
-                          Typography
-                        </button>
-                      </nav>
-                    </div>
-
-                    {/* Tab Content */}
-                    <div className="p-4">
-                      {advancedTab === 'editor' ? (
-                        <div>
-                          <textarea
-                            ref={textareaRef}
-                            value={text}
-                            onChange={handleCursorPositionChange}
-                            onClick={handleTextareaClick}
-                            onKeyUp={(e) => setCursorPosition((e.target as HTMLTextAreaElement).selectionStart)}
-                            className="premium-input premium-textarea w-full min-h-[300px] mb-4"
-                          />
-                          <div className="text-xs text-gray-500 mb-4">
-                            Cursor: {cursorPosition} | Lines: {text.split('\n').length}
-                          </div>
-                          
-                          <div>
-                            <h4 className="font-semibold text-sm text-gray-900 mb-2">Add Images</h4>
-                            <ImageUpload 
-                              onImageInsert={handleImageInsert}
-                              disabled={false}
+                    // Handle image placeholders
+                    if (paragraph.startsWith('[IMAGE:') || paragraph.startsWith('[FULLPAGE:')) {
+                      const isFullPage = paragraph.startsWith('[FULLPAGE:');
+                      const filename = paragraph.match(/\[(?:IMAGE|FULLPAGE):(.+?)\]/)?.[1];
+                      
+                      if (filename && uploadedImages[filename]) {
+                        return (
+                          <div key={index} className={`my-6 ${isFullPage ? 'text-center' : 'inline-block mr-4 float-left'}`}>
+                            <img 
+                              src={uploadedImages[filename]} 
+                              alt={filename}
+                              className={isFullPage ? 'max-w-full h-auto mx-auto rounded-lg shadow-md' : 'w-32 h-32 object-cover rounded-lg shadow-md'}
                             />
                           </div>
-                        </div>
-                      ) : (
-                        <div className="h-[400px] overflow-y-auto">
-                          <div className="space-y-4">
-                            {Object.keys(fontStyles).map(elementType => (
-                              <FontControls
-                                key={elementType}
-                                elementType={elementType}
-                                currentStyle={fontStyles[elementType]}
-                                onStyleChange={handleFontStyleChange}
-                              />
-                            ))}
+                        );
+                      } else {
+                        return (
+                          <div key={index} className={`my-4 p-4 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg text-center ${isFullPage ? 'block' : 'inline-block mr-4 w-32'}`}>
+                            <div className="text-gray-500">
+                              <svg className="mx-auto h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <p className="text-sm font-medium">{isFullPage ? 'Full Page' : 'Inline'} Image</p>
+                              <p className="text-xs">{filename || 'Image placeholder'}</p>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Live Preview */}
-                  <div>
-                    <h3 className="font-semibold text-lg text-gray-900 mb-3">Live Preview</h3>
-                    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-                      <PreviewPane 
-                        content={parsedContent}
-                        template={selectedTemplate}
-                        customStyles={fontStyles}
-                        uploadedImages={uploadedImages}
-                      />
-                    </div>
-                  </div>
+                        );
+                      }
+                    }
+                    
+                    // Regular paragraphs
+                    if (paragraph.trim()) {
+                      return (
+                        <p key={index} className="mb-4 leading-relaxed text-gray-800">
+                          {paragraph}
+                        </p>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                  <svg className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p className="text-lg font-medium mb-2">Your formatted book will appear here</p>
+                  <p className="text-sm text-center max-w-xs">Upload your manuscript or try sample content to see the live preview</p>
                 </div>
               )}
+            </div>
+          </div>
+          
+        </div>
+        
+        {/* Advanced Options Panel */}
+        {showAdvanced && (
+          <div className="w-full max-w-6xl mt-8 bg-[#2a2a2a] rounded-2xl border border-gray-600 p-8">
+            <h4 className="text-xl font-bold text-white mb-6">Advanced Formatting Options</h4>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-300">Font Size</label>
+                <select className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-cyan-400 focus:border-transparent">
+                  <option value="12pt">12pt (Standard)</option>
+                  <option value="11pt">11pt (Compact)</option>
+                  <option value="14pt">14pt (Large)</option>
+                </select>
+              </div>
+              
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-300">Line Spacing</label>
+                <select className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-cyan-400 focus:border-transparent">
+                  <option value="1.5">1.5 (Recommended)</option>
+                  <option value="1.0">1.0 (Single)</option>
+                  <option value="2.0">2.0 (Double)</option>
+                </select>
+              </div>
+              
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-300">Page Margins</label>
+                <select className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-cyan-400 focus:border-transparent">
+                  <option value="standard">Standard (1 inch)</option>
+                  <option value="narrow">Narrow (0.75 inch)</option>
+                  <option value="wide">Wide (1.25 inch)</option>
+                </select>
+              </div>
+              
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-300">Chapter Style</label>
+                <select className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-cyan-400 focus:border-transparent">
+                  <option value="centered">Centered with space</option>
+                  <option value="left">Left-aligned</option>
+                  <option value="decorative">Decorative headers</option>
+                </select>
+              </div>
+              
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-300">Text Alignment</label>
+                <select className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-cyan-400 focus:border-transparent">
+                  <option value="justified">Justified</option>
+                  <option value="left">Left-aligned</option>
+                  <option value="center">Centered</option>
+                </select>
+              </div>
+              
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-300">Page Breaks</label>
+                <select className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-cyan-400 focus:border-transparent">
+                  <option value="auto">Auto (Recommended)</option>
+                  <option value="chapter">Before each chapter</option>
+                  <option value="none">No page breaks</option>
+                </select>
+              </div>
+            </div>
+            
+            {/* Image Upload for Advanced Mode */}
+            <div className="mt-8">
+              <ImageUpload 
+                onImageInsert={handleImageInsert}
+                disabled={false}
+              />
             </div>
           </div>
         )}
