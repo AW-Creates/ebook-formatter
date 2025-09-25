@@ -1,7 +1,10 @@
 export interface ContentBlock {
-  type: 'chapter' | 'paragraph';
+  type: 'chapter' | 'paragraph' | 'image';
   content: string;
   level?: number;
+  imageUrl?: string;
+  imageAlt?: string;
+  fullPage?: boolean;
 }
 
 export interface Template {
@@ -24,8 +27,19 @@ export const parseText = (text: string): ContentBlock[] => {
       continue;
     }
 
+    // Check if line is an image placeholder
+    if (isImagePlaceholder(trimmedLine)) {
+      const imageData = parseImagePlaceholder(trimmedLine);
+      contentBlocks.push({
+        type: 'image',
+        content: imageData.alt || 'Full page image',
+        imageUrl: imageData.url,
+        imageAlt: imageData.alt,
+        fullPage: imageData.fullPage
+      });
+    }
     // Check if line is a chapter heading
-    if (isChapterHeading(trimmedLine)) {
+    else if (isChapterHeading(trimmedLine)) {
       contentBlocks.push({
         type: 'chapter',
         content: trimmedLine,
@@ -118,4 +132,51 @@ const getHeadingLevel = (line: string): number => {
 
   // Default to level 1 for other headings
   return 1;
+};
+
+const isImagePlaceholder = (line: string): boolean => {
+  // Match patterns like [IMAGE:filename.jpg] or [FULLPAGE:filename.png] or [IMG:url]
+  const imagePatterns = [
+    /^\[IMAGE:[^\]]+\]$/i,
+    /^\[FULLPAGE:[^\]]+\]$/i,
+    /^\[IMG:[^\]]+\]$/i,
+    /^\[CHAPTER-IMAGE:[^\]]+\]$/i
+  ];
+  
+  return imagePatterns.some(pattern => pattern.test(line.trim()));
+};
+
+interface ImageData {
+  url: string;
+  alt: string;
+  fullPage: boolean;
+}
+
+const parseImagePlaceholder = (line: string): ImageData => {
+  const trimmed = line.trim();
+  
+  // Extract content between brackets
+  const match = trimmed.match(/^\[([^:]+):([^\]]+)\]$/i);
+  if (!match) {
+    return { url: '', alt: 'Image', fullPage: false };
+  }
+  
+  const [, type, content] = match;
+  const isFullPage = type.toUpperCase() === 'FULLPAGE' || type.toUpperCase() === 'CHAPTER-IMAGE';
+  
+  // Handle different URL types
+  let url = content;
+  let alt = content;
+  
+  // If it looks like a filename, create a more descriptive alt text
+  if (content.includes('.')) {
+    const filename = content.split('/').pop() || content;
+    alt = filename.split('.')[0].replace(/[-_]/g, ' ');
+  }
+  
+  return {
+    url,
+    alt: alt.charAt(0).toUpperCase() + alt.slice(1),
+    fullPage: isFullPage
+  };
 };

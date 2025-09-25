@@ -315,38 +315,36 @@ The room was exactly as her grandmother had described it - filled with countless
         {/* Simple Mode Quick Actions */}
         {currentView === 'simple' && (
           <div className="card mb-8 animate-fade-in">
-            <div className="card-header">
-              <div className="card-title">Quick Actions</div>
-              <div className="card-description">Choose a style template and get started</div>
-            </div>
             <div className="card-content">
-              <div className="flex flex-col md:flex-row gap-4 items-start md:items-end">
+              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
                 {/* Template Selector */}
                 <div className="flex-1">
-                  <label className="form-label">Style Template</label>
-                  <select
-                    value={selectedTemplate}
-                    onChange={(e) => handleTemplateChange(e.target.value)}
-                    className="form-input"
-                  >
-                    {Object.entries(templates).map(([key, template]) => (
-                      <option key={key} value={key}>
-                        {template.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Template:</label>
+                    <select
+                      value={selectedTemplate}
+                      onChange={(e) => handleTemplateChange(e.target.value)}
+                      className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+                    >
+                      {Object.entries(templates).map(([key, template]) => (
+                        <option key={key} value={key}>
+                          {template.name} - {template.description}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <button
                     onClick={() => setText(sampleText)}
-                    className="btn btn-secondary"
+                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                     </svg>
-                    Load Sample
+                    Sample Text
                   </button>
 
                   {text.trim() && (
@@ -365,19 +363,24 @@ The room was exactly as her grandmother had described it - filled with countless
 
         {/* Layout based on view mode */}
         {currentView === 'simple' ? (
-          /* Simple Dual Pane Layout */
+          /* Clean Two-Column Layout */
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-            {/* Input Pane */}
+            {/* Content Editor */}
             <div className="card">
               <div className="card-header">
-                <div className="card-title flex items-center gap-2">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Your Content
-                </div>
-                <div className="card-description">
-                  {text.trim() ? 'Edit your content below or upload a new document.' : 'Start by typing or uploading your manuscript'}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Content Editor</h3>
+                    <p className="text-sm text-gray-600">
+                      {text.trim() ? 'Edit your manuscript or upload a new document' : 'Write your story or upload a document to get started'}
+                    </p>
+                  </div>
+                  {text.trim() && (
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-gray-900">{text.length.toLocaleString()}</div>
+                      <div className="text-xs text-gray-500">characters</div>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="card-content pt-0">
@@ -385,39 +388,41 @@ The room was exactly as her grandmother had described it - filled with countless
                   <textarea
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    placeholder="Start writing your story here...\n\nOr upload a document using the upload area above."
-                    className="w-full min-h-[500px] max-h-[800px] p-4 border border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm leading-relaxed transition-all"
+                    placeholder="Chapter 1\nThe Beginning\n\nIt was a dark and stormy night...\n\n[IMAGE:chapter1.jpg]\n\nThe story continues here..."
+                    className="w-full min-h-[500px] max-h-[800px] p-4 border-0 resize-y focus:outline-none focus:ring-0 text-sm leading-relaxed transition-all bg-transparent"
                     style={{ 
                       fontFamily: 'var(--font-mono, monospace)',
                       height: Math.max(500, Math.min(800, (text.split('\n').length * 24) + 100)) + 'px'
                     }}
                   />
-                  <div className="absolute top-4 right-4 text-xs text-gray-400 bg-white/80 backdrop-blur-sm px-2 py-1 rounded border border-gray-200 shadow-sm">
-                    {text.length} characters • {text.split('\n').length} lines
+                  <div className="absolute bottom-4 right-4 text-xs text-gray-400 bg-white/90 backdrop-blur-sm px-2 py-1 rounded border border-gray-200 shadow-sm">
+                    {text.split('\n').length} lines
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Preview Pane */}
+            {/* Live Preview */}
             <div className="card">
               <div className="card-header">
-                <div className="card-title flex items-center gap-2">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  Live Preview
-                </div>
-                <div className="card-description flex items-center justify-between">
-                  <span>Real-time formatting with {templates[selectedTemplate]?.name} template</span>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Live Preview</h3>
+                    <p className="text-sm text-gray-600">
+                      {templates[selectedTemplate]?.name} template • Real-time formatting
+                    </p>
+                  </div>
                   {text.trim() && (
-                    <span className="badge badge-primary">{parsedContent.length} elements</span>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                        {parsedContent.length} elements
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
               <div className="card-content pt-0">
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
                   <PreviewPane 
                     content={parsedContent}
                     template={selectedTemplate}

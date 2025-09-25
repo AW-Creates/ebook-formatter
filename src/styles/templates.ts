@@ -34,6 +34,58 @@ export const templates: Record<string, Template> = {
       .paragraph:first-of-type {
         text-indent: 0;
       }
+      
+      /* Image Placeholder Styles */
+      .image-container {
+        margin: 30px 0;
+        page-break-inside: avoid;
+      }
+      
+      .full-page-image {
+        margin: 60px 0;
+        page-break-before: always;
+        page-break-after: always;
+      }
+      
+      .image-placeholder {
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        padding: 30px;
+        text-align: center;
+        background: #f9fafb;
+        color: #6b7280;
+      }
+      
+      .full-page-image .image-placeholder {
+        padding: 80px 30px;
+        background: #f3f4f6;
+        border-color: #9ca3af;
+      }
+      
+      .image-icon {
+        margin: 0 auto 15px;
+        color: #9ca3af;
+      }
+      
+      .image-title {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 8px;
+        color: #374151;
+      }
+      
+      .image-filename {
+        font-size: 12px;
+        font-family: monospace;
+        color: #6b7280;
+        margin-bottom: 4px;
+      }
+      
+      .image-alt {
+        font-size: 11px;
+        color: #9ca3af;
+        font-style: italic;
+      }
     `
   },
   
@@ -64,6 +116,16 @@ export const templates: Record<string, Template> = {
         margin-bottom: 18px;
         text-align: left;
       }
+      
+      /* Image Placeholder Styles */
+      .image-container { margin: 25px 0; page-break-inside: avoid; }
+      .full-page-image { margin: 50px 0; page-break-before: always; page-break-after: always; }
+      .image-placeholder { border: 2px dashed #d1d5db; border-radius: 8px; padding: 25px; text-align: center; background: #f9fafb; color: #6b7280; }
+      .full-page-image .image-placeholder { padding: 60px 25px; background: #f3f4f6; border-color: #9ca3af; }
+      .image-icon { margin: 0 auto 12px; color: #9ca3af; }
+      .image-title { font-weight: 600; font-size: 13px; margin-bottom: 6px; color: #374151; }
+      .image-filename { font-size: 11px; font-family: monospace; color: #6b7280; margin-bottom: 3px; }
+      .image-alt { font-size: 10px; color: #9ca3af; font-style: italic; }
     `
   },
   
@@ -104,6 +166,16 @@ export const templates: Record<string, Template> = {
         text-indent: 0;
         font-variant: small-caps;
       }
+      
+      /* Image Placeholder Styles */
+      .image-container { margin: 35px 0; page-break-inside: avoid; }
+      .full-page-image { margin: 70px 0; page-break-before: always; page-break-after: always; }
+      .image-placeholder { border: 2px dashed #d1d5db; border-radius: 8px; padding: 35px; text-align: center; background: #f9fafb; color: #6b7280; }
+      .full-page-image .image-placeholder { padding: 90px 35px; background: #f3f4f6; border-color: #9ca3af; }
+      .image-icon { margin: 0 auto 18px; color: #9ca3af; }
+      .image-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; color: #374151; text-transform: uppercase; letter-spacing: 1px; }
+      .image-filename { font-size: 12px; font-family: monospace; color: #6b7280; margin-bottom: 4px; }
+      .image-alt { font-size: 11px; color: #9ca3af; font-style: italic; }
     `
   },
   
@@ -141,6 +213,16 @@ export const templates: Record<string, Template> = {
         padding-left: 15px;
         border-left: 2px solid #065f46;
       }
+      
+      /* Image Placeholder Styles */
+      .image-container { margin: 20px 0; page-break-inside: avoid; }
+      .full-page-image { margin: 40px 0; page-break-before: always; page-break-after: always; }
+      .image-placeholder { border: 2px dashed #164e63; border-radius: 8px; padding: 25px; text-align: center; background: #0c4a6e; color: #06b6d4; }
+      .full-page-image .image-placeholder { padding: 60px 25px; background: #0f3a5f; border-color: #0369a1; }
+      .image-icon { margin: 0 auto 12px; color: #06b6d4; }
+      .image-title { font-weight: 700; font-size: 12px; margin-bottom: 6px; color: #67e8f9; text-transform: uppercase; letter-spacing: 1px; }
+      .image-filename { font-size: 10px; font-family: monospace; color: #22d3ee; margin-bottom: 3px; }
+      .image-alt { font-size: 9px; color: #0891b2; font-style: italic; }
     `
   }
 };
