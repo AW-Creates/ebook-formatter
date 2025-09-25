@@ -39,28 +39,14 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({
         throw new Error(errorData.error || `Failed to generate ${format.toUpperCase()}`);
       }
 
-      // Get filename from response headers or use default
-      const contentDisposition = response.headers.get('content-disposition');
-      let filename = `${title.replace(/[^a-z0-9]/gi, '_')}.${format}`;
+      const result = await response.json();
       
-      if (contentDisposition) {
-        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
-        if (matches != null && matches[1]) {
-          filename = matches[1].replace(/['"]/g, '');
-        }
+      if (result.success) {
+        // For mock server, just show success message
+        alert(`✅ ${result.message}\nFilename: ${result.filename}\n\nNote: This is a demo - actual file download would happen in production.`);
+      } else {
+        throw new Error(result.message || `Failed to generate ${format.toUpperCase()}`);
       }
-
-      // Download the file
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
       
       setIsMenuOpen(false);
     } catch (error) {

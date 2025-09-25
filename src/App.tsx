@@ -3,6 +3,7 @@ import './App.css';
 import './styles/modern.css';
 import './styles/brand.css';
 import ImageUpload from './components/ImageUpload';
+import DownloadButton from './components/DownloadButton';
 import { useToast, ToastContainer } from './components/Toast';
 
 
@@ -95,28 +96,6 @@ The room was exactly as her grandmother had described it - filled with countless
     reader.readAsText(file);
   };
 
-  const handleDownload = () => {
-    if (!text.trim()) {
-      toast.showError('No content to download', 'Please upload or enter some content first.');
-      return;
-    }
-
-    // Create a simple text file download
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${bookTitle || 'formatted-book'}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-
-    toast.showSuccess(
-      'Download started!',
-      `Your formatted book "${bookTitle}" has been downloaded.`
-    );
-  };
 
   return (
     <div className="min-h-screen bg-[#1A1A1A] text-gray-200 flex flex-col font-sans relative">
@@ -214,10 +193,10 @@ The room was exactly as her grandmother had described it - filled with countless
                   onChange={(e) => setSelectedTemplate(e.target.value)}
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
                 >
-                  <option value="modern">Modern Fiction</option>
                   <option value="classic">Classic Literature</option>
-                  <option value="academic">Academic Paper</option>
-                  <option value="non-fiction">Non-Fiction</option>
+                  <option value="modern">Modern Fiction</option>
+                  <option value="elegant">Elegant Typography</option>
+                  <option value="scifi">Sci-Fi Style</option>
                 </select>
               </div>
               
@@ -237,13 +216,21 @@ The room was exactly as her grandmother had described it - filled with countless
               
               {/* Download Button */}
               <div className="pt-6">
-                <button
-                  onClick={handleDownload}
-                  disabled={!text.trim()}
-                  className="w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-600 text-white font-bold rounded-xl transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
-                >
-                  {text.trim() ? 'Download Formatted Book' : 'Upload content to continue'}
-                </button>
+                {text.trim() ? (
+                  <DownloadButton 
+                    text={text}
+                    templateName={selectedTemplate}
+                    title={bookTitle}
+                    author="Anonymous"
+                  />
+                ) : (
+                  <button
+                    disabled
+                    className="w-full py-4 bg-gradient-to-r disabled:from-gray-600 disabled:to-gray-600 text-white font-bold rounded-xl transition-all duration-200 disabled:scale-100 disabled:cursor-not-allowed"
+                  >
+                    Upload content to continue
+                  </button>
+                )}
               </div>
             </div>
           </div>
