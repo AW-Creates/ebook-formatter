@@ -3,7 +3,6 @@ import './App.css';
 import './styles/modern.css';
 import './styles/brand.css';
 import { parseText } from './utils/textParser';
-import { templates } from './styles/templates';
 import PreviewPane from './components/PreviewPane';
 import DownloadButton from './components/DownloadButton';
 import FileUpload from './components/FileUpload';
@@ -31,9 +30,6 @@ const App: React.FC = () => {
   const [bookTitle, setBookTitle] = useState<string>('Untitled Book');
   const [author, setAuthor] = useState<string>('Anonymous');
   const [currentView, setCurrentView] = useState<'simple' | 'advanced'>('simple');
-  const [uploadError, setUploadError] = useState<string>('');
-  const [uploadSuccess, setUploadSuccess] = useState<string>('');
-  const [documentStructure, setDocumentStructure] = useState<any>(null);
   const [advancedTab, setAdvancedTab] = useState<'editor' | 'typography'>('editor');
   const [uploadedImages, setUploadedImages] = useState<Record<string, string>>({});
   const [cursorPosition, setCursorPosition] = useState<number>(0);
@@ -103,11 +99,8 @@ const App: React.FC = () => {
     }
   }, [text, workflowStep]);
 
-  const handleFileProcessed = (extractedText: string, filename: string, structure: any) => {
+  const handleFileProcessed = (extractedText: string, filename: string) => {
     setText(extractedText);
-    setDocumentStructure(structure);
-    setUploadError('');
-    setUploadSuccess('');
     
     // Extract title from filename if not set
     if (bookTitle === 'Untitled Book') {
@@ -124,10 +117,7 @@ const App: React.FC = () => {
   };
 
   const handleFileError = (error: string) => {
-    setUploadError(error);
-    setUploadSuccess(''); 
     toast.showError('Upload failed', error);
-    setTimeout(() => setUploadError(''), 5000);
   };
 
   const handleFontStyleChange = (elementType: string, newStyle: FontStyle) => {

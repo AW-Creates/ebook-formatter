@@ -1,5 +1,4 @@
 import React from 'react';
-import { templates } from '../styles/templates';
 
 interface TemplateShowcaseProps {
   selectedTemplate: string;
