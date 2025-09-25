@@ -30,6 +30,7 @@ const App: React.FC = () => {
   const [uploadError, setUploadError] = useState<string>('');
   const [uploadSuccess, setUploadSuccess] = useState<string>('');
   const [documentStructure, setDocumentStructure] = useState<any>(null);
+  const [advancedTab, setAdvancedTab] = useState<'editor' | 'typography'>('editor');
   
   // Font styles for different elements
   const [fontStyles, setFontStyles] = useState<Record<string, FontStyle>>({
@@ -433,114 +434,139 @@ The room was exactly as her grandmother had described it - filled with countless
             </div>
           </div>
         ) : (
-          /* Advanced Three-Column Layout */
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 animate-fade-in">
-            {/* Input Pane */}
-            <div className="card">
-              <div className="card-header py-4">
-                <div className="card-title flex items-center gap-2 text-base">
-                  <div className="w-6 h-6 bg-green-100 rounded-md flex items-center justify-center">
-                    <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  Content Editor
-                </div>
-                <div className="card-description text-xs">
-                  Raw manuscript text
-                </div>
-              </div>
-              <div className="card-content pt-0">
-                <textarea
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Enter your manuscript content here..."
-                  className="w-full min-h-[400px] max-h-[600px] p-4 border border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm leading-relaxed transition-all"
-                  style={{ 
-                    fontFamily: 'var(--font-mono, monospace)',
-                    height: Math.max(400, Math.min(600, (text.split('\n').length * 22) + 80)) + 'px'
-                  }}
-                />
-                
-                {/* Advanced Controls */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex-1">
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Base Template</label>
-                      <select
-                        value={selectedTemplate}
-                        onChange={(e) => handleTemplateChange(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      >
-                        {Object.entries(templates).map(([key, template]) => (
-                          <option key={key} value={key}>
-                            {template.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    {text.trim() && (
-                      <div className="flex items-end">
-                        <DownloadButton
-                          text={text}
-                          templateName={selectedTemplate}
-                          title={bookTitle}
-                          author={author}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Font Controls Pane */}
-            <div className="card">
-              <div className="card-header py-4">
-                <div className="card-title flex items-center gap-2 text-base">
-                  <div className="w-6 h-6 bg-orange-100 rounded-md flex items-center justify-center">
-                    <svg className="w-3 h-3 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5H9a2 2 0 00-2 2v12a4 4 0 004 4h10a2 2 0 002-2V7a2 2 0 00-2-2z" />
-                    </svg>
-                  </div>
-                  Typography Controls
-                </div>
-                <div className="card-description text-xs">
-                  Fine-tune every element
-                </div>
-              </div>
-              <div className="card-content pt-0">
-                <div className="h-[500px] overflow-y-auto">
-                  <div className="space-y-4">
-                    {Object.keys(fontStyles).map(elementType => (
-                      <FontControls
-                        key={elementType}
-                        elementType={elementType}
-                        currentStyle={fontStyles[elementType]}
-                        onStyleChange={handleFontStyleChange}
-                      />
-                    ))}
-                  </div>
-                  
-                  <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+          /* Advanced Tabbed Layout */
+          <div className="animate-fade-in">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Panel - Tabbed Editor & Controls */}
+              <div className="card">
+                {/* Tab Navigation */}
+                <div className="border-b border-gray-200">
+                  <nav className="flex space-x-8 px-6 pt-4" aria-label="Tabs">
+                    <button
+                      onClick={() => setAdvancedTab('editor')}
+                      className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                        advancedTab === 'editor'
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
+                        Content Editor
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-blue-900 mb-1">Pro Tips</p>
-                        <p className="text-xs text-blue-700">
-                          All changes apply instantly to the preview. Create your perfect custom template and save it for future use!
-                        </p>
+                    </button>
+                    <button
+                      onClick={() => setAdvancedTab('typography')}
+                      className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                        advancedTab === 'typography'
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5H9a2 2 0 00-2 2v12a4 4 0 004 4h10a2 2 0 002-2V7a2 2 0 00-2-2z" />
+                        </svg>
+                        Typography Controls
+                      </div>
+                    </button>
+                  </nav>
+                </div>
+
+                {/* Tab Content */}
+                <div className="card-content">
+                  {advancedTab === 'editor' ? (
+                    /* Content Editor Tab */
+                    <div>
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1">Manuscript Editor</h3>
+                        <p className="text-sm text-gray-600">Edit your content and see changes instantly in the preview</p>
+                      </div>
+                      
+                      <textarea
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        placeholder="Chapter 1\nThe Beginning\n\n[FULLPAGE:chapter1-cover.jpg]\n\nIt was a dark and stormy night...\n\nYour story continues here..."
+                        className="w-full min-h-[400px] max-h-[600px] p-4 border border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm leading-relaxed transition-all"
+                        style={{ 
+                          fontFamily: 'var(--font-mono, monospace)',
+                          height: Math.max(400, Math.min(600, (text.split('\n').length * 22) + 80)) + 'px'
+                        }}
+                      />
+                      
+                      {/* Quick Actions */}
+                      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                              <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Template:</label>
+                              <select
+                                value={selectedTemplate}
+                                onChange={(e) => handleTemplateChange(e.target.value)}
+                                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+                              >
+                                {Object.entries(templates).map(([key, template]) => (
+                                  <option key={key} value={key}>
+                                    {template.name} - {template.description}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                          
+                          {text.trim() && (
+                            <DownloadButton
+                              text={text}
+                              templateName={selectedTemplate}
+                              title={bookTitle}
+                              author={author}
+                            />
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    /* Typography Controls Tab */
+                    <div>
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1">Typography Controls</h3>
+                        <p className="text-sm text-gray-600">Customize fonts, sizes, and styling for each element</p>
+                      </div>
+                      
+                      <div className="h-[500px] overflow-y-auto">
+                        <div className="space-y-4">
+                          {Object.keys(fontStyles).map(elementType => (
+                            <FontControls
+                              key={elementType}
+                              elementType={elementType}
+                              currentStyle={fontStyles[elementType]}
+                              onStyleChange={handleFontStyleChange}
+                            />
+                          ))}
+                        </div>
+                        
+                        <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+                          <div className="flex items-start gap-3">
+                            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-blue-900 mb-1">Pro Tips</p>
+                              <p className="text-xs text-blue-700">
+                                Switch to the Live Preview (right panel) to see your changes instantly. All typography changes apply in real-time!
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
 
             {/* Preview Pane */}
             <div className="card">
@@ -569,6 +595,7 @@ The room was exactly as her grandmother had described it - filled with countless
               </div>
             </div>
           </div>
+        </div>
         )}
 
         {/* Template Description */}
