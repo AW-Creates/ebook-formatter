@@ -386,14 +386,15 @@ The room was exactly as her grandmother had described it - filled with countless
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     placeholder="Start writing your story here...\n\nOr upload a document using the upload area above."
-                    className="w-full h-[500px] p-4 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm leading-relaxed transition-all"
-                    style={{ fontFamily: 'var(--font-mono)' }}
+                    className="w-full min-h-[500px] max-h-[800px] p-4 border border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm leading-relaxed transition-all"
+                    style={{ 
+                      fontFamily: 'var(--font-mono, monospace)',
+                      height: Math.max(500, Math.min(800, (text.split('\n').length * 24) + 100)) + 'px'
+                    }}
                   />
-                  {!text.trim() && (
-                    <div className="absolute top-4 right-4 text-xs text-gray-400 bg-white px-2 py-1 rounded border">
-                      {text.length} characters
-                    </div>
-                  )}
+                  <div className="absolute top-4 right-4 text-xs text-gray-400 bg-white/80 backdrop-blur-sm px-2 py-1 rounded border border-gray-200 shadow-sm">
+                    {text.length} characters • {text.split('\n').length} lines
+                  </div>
                 </div>
               </div>
             </div>
@@ -428,17 +429,19 @@ The room was exactly as her grandmother had described it - filled with countless
           </div>
         ) : (
           /* Advanced Three-Column Layout */
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 animate-fade-in">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 animate-fade-in">
             {/* Input Pane */}
             <div className="card">
-              <div className="card-header">
-                <div className="card-title flex items-center gap-2">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+              <div className="card-header py-4">
+                <div className="card-title flex items-center gap-2 text-base">
+                  <div className="w-6 h-6 bg-green-100 rounded-md flex items-center justify-center">
+                    <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
                   Content Editor
                 </div>
-                <div className="card-description">
+                <div className="card-description text-xs">
                   Raw manuscript text
                 </div>
               </div>
@@ -447,8 +450,11 @@ The room was exactly as her grandmother had described it - filled with countless
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   placeholder="Enter your manuscript content here..."
-                  className="w-full h-[400px] p-4 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm leading-relaxed transition-all"
-                  style={{ fontFamily: 'var(--font-mono)' }}
+                  className="w-full min-h-[400px] max-h-[600px] p-4 border border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm leading-relaxed transition-all"
+                  style={{ 
+                    fontFamily: 'var(--font-mono, monospace)',
+                    height: Math.max(400, Math.min(600, (text.split('\n').length * 22) + 80)) + 'px'
+                  }}
                 />
                 
                 {/* Advanced Controls */}
@@ -486,14 +492,16 @@ The room was exactly as her grandmother had described it - filled with countless
 
             {/* Font Controls Pane */}
             <div className="card">
-              <div className="card-header">
-                <div className="card-title flex items-center gap-2">
-                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5H9a2 2 0 00-2 2v12a4 4 0 004 4h10a2 2 0 002-2V7a2 2 0 00-2-2z" />
-                  </svg>
+              <div className="card-header py-4">
+                <div className="card-title flex items-center gap-2 text-base">
+                  <div className="w-6 h-6 bg-orange-100 rounded-md flex items-center justify-center">
+                    <svg className="w-3 h-3 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5H9a2 2 0 00-2 2v12a4 4 0 004 4h10a2 2 0 002-2V7a2 2 0 00-2-2z" />
+                    </svg>
+                  </div>
                   Typography Controls
                 </div>
-                <div className="card-description">
+                <div className="card-description text-xs">
                   Fine-tune every element
                 </div>
               </div>
@@ -531,15 +539,17 @@ The room was exactly as her grandmother had described it - filled with countless
 
             {/* Preview Pane */}
             <div className="card">
-              <div className="card-header">
-                <div className="card-title flex items-center gap-2">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
+              <div className="card-header py-4">
+                <div className="card-title flex items-center gap-2 text-base">
+                  <div className="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center">
+                    <svg className="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </div>
                   Live Preview
                 </div>
-                <div className="card-description">
+                <div className="card-description text-xs">
                   Dynamic formatting preview
                 </div>
               </div>

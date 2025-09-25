@@ -159,15 +159,16 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onError }) => 
 
         .modern-upload-area {
           position: relative;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
-          backdrop-filter: blur(10px);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+          backdrop-filter: blur(12px);
           border: 2px dashed var(--gray-300, #d1d5db);
           border-radius: var(--radius-xl, 1rem);
-          padding: var(--space-12, 3rem);
+          padding: var(--space-8, 2rem) var(--space-6, 1.5rem);
           text-align: center;
           cursor: pointer;
           transition: all var(--transition-slow, 300ms cubic-bezier(0.4, 0, 0.2, 1));
           overflow: hidden;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
         .modern-upload-area::before {
@@ -212,16 +213,17 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onError }) => 
         }
 
         .upload-icon {
-          width: 64px;
-          height: 64px;
-          margin: 0 auto var(--space-4);
-          background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
-          border-radius: var(--radius-xl);
+          width: 48px;
+          height: 48px;
+          margin: 0 auto var(--space-3, 0.75rem);
+          background: linear-gradient(135deg, var(--primary-500, #0ea5e9) 0%, var(--primary-600, #0284c7) 100%);
+          border-radius: var(--radius-lg, 0.75rem);
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
-          transition: all var(--transition);
+          transition: all var(--transition, 200ms);
+          box-shadow: 0 2px 4px rgba(14, 165, 233, 0.2);
         }
 
         .modern-upload-area:hover .upload-icon {
@@ -230,8 +232,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed, onError }) => 
         }
 
         .upload-icon svg {
-          width: 32px;
-          height: 32px;
+          width: 24px;
+          height: 24px;
         }
 
         .upload-idle h4 {
