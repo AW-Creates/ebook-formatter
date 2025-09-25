@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import './styles/modern.css';
+import './styles/brand.css';
 import { parseText } from './utils/textParser';
 import { templates } from './styles/templates';
 import PreviewPane from './components/PreviewPane';
@@ -8,6 +9,8 @@ import DownloadButton from './components/DownloadButton';
 import FileUpload from './components/FileUpload';
 import FontControls from './components/FontControls';
 import ImageUpload from './components/ImageUpload';
+import TemplateShowcase from './components/TemplateShowcase';
+import { useToast, ToastContainer } from './components/Toast';
 
 interface FontStyle {
   fontFamily: string;
@@ -34,7 +37,10 @@ const App: React.FC = () => {
   const [advancedTab, setAdvancedTab] = useState<'editor' | 'typography'>('editor');
   const [uploadedImages, setUploadedImages] = useState<Record<string, string>>({});
   const [cursorPosition, setCursorPosition] = useState<number>(0);
+  const [workflowStep, setWorkflowStep] = useState<'upload' | 'template' | 'customize' | 'preview' | 'export'>('upload');
+  const [showOnboarding, setShowOnboarding] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const toast = useToast();
   
   // Font styles for different elements
   const [fontStyles, setFontStyles] = useState<Record<string, FontStyle>>({
@@ -89,33 +95,39 @@ const App: React.FC = () => {
     if (text.trim()) {
       const parsed = parseText(text);
       setParsedContent(parsed);
+      if (workflowStep === 'upload') {
+        setWorkflowStep('template');
+      }
     } else {
       setParsedContent([]);
     }
-  }, [text]);
-
-  const handleTemplateChange = (templateName: string) => {
-    setSelectedTemplate(templateName);
-  };
+  }, [text, workflowStep]);
 
   const handleFileProcessed = (extractedText: string, filename: string, structure: any) => {
     setText(extractedText);
     setDocumentStructure(structure);
     setUploadError('');
-    setUploadSuccess(`✅ Successfully loaded "${filename}"`);
-    setTimeout(() => setUploadSuccess(''), 4000); // Clear success after 4 seconds
+    setUploadSuccess('');
     
     // Extract title from filename if not set
     if (bookTitle === 'Untitled Book') {
       const nameWithoutExt = filename.replace(/\.[^/.]+$/, "");
       setBookTitle(nameWithoutExt);
     }
+
+    // Progress workflow and show success
+    setWorkflowStep('template');
+    toast.showSuccess(
+      'Document uploaded successfully!',
+      `Loaded "${filename}" with ${extractedText.split('\n').length} lines. Choose a template next.`
+    );
   };
 
   const handleFileError = (error: string) => {
     setUploadError(error);
-    setUploadSuccess(''); // Clear any success message
-    setTimeout(() => setUploadError(''), 5000); // Clear error after 5 seconds
+    setUploadSuccess(''); 
+    toast.showError('Upload failed', error);
+    setTimeout(() => setUploadError(''), 5000);
   };
 
   const handleFontStyleChange = (elementType: string, newStyle: FontStyle) => {
@@ -156,6 +168,12 @@ const App: React.FC = () => {
     const newCursorPosition = cursorPosition + placeholder.length + 2; // +2 for the newlines
     setCursorPosition(newCursorPosition);
     
+    // Show success notification
+    toast.showSuccess(
+      `${isFullPage ? 'Full-page' : 'Inline'} image added!`,
+      `"${filename}" has been inserted at cursor position ${cursorPosition}`
+    );
+    
     // Focus the textarea and set cursor position
     setTimeout(() => {
       if (textareaRef.current) {
@@ -165,7 +183,16 @@ const App: React.FC = () => {
     }, 100);
   };
 
-  const sampleText = `My Amazing Novel
+  const handleTemplateChange = (templateName: string) => {
+    setSelectedTemplate(templateName);
+    toast.showInfo(
+      'Template updated',
+      `Switched to ${templateName} template. Check the preview to see changes.`
+    );
+  };
+
+  const handleSampleText = () => {
+    const sampleText = `My Amazing Novel
 
 Chapter 1
 The Beginning
@@ -181,168 +208,194 @@ Inside the mansion, dust particles danced in the pale moonlight that filtered th
 
 The room was exactly as her grandmother had described it - filled with countless books that reached from floor to ceiling. But it was the old wooden desk in the center that caught her attention.`;
 
+    setText(sampleText);
+    setWorkflowStep('template');
+    setShowOnboarding(false);
+    toast.showInfo(
+      'Sample content loaded',
+      'Try different templates and see how your content looks!'
+    );
+  };
+
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f9fafb 0%, #f0f9ff 100%)' }}>
-      {/* Modern Header */}
-      <header className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-90"></div>
-        <div className="absolute inset-0 opacity-50" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='1'%3E%3C/circle%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-        }}></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-primary-50 to-secondary-50">
+      {/* Premium Brand Header */}
+      <header className="brand-header relative">
+        <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-between py-8">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-white to-blue-50 rounded-xl flex items-center justify-center shadow-lg">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white">
-                  Ebook Formatter
-                </h1>
-                <p className="text-blue-100 text-sm mt-1">
-                  Transform manuscripts into beautiful ebooks
-                </p>
+                <h1 className="brand-logo">Manuscript Studio</h1>
+                <p className="brand-tagline">Turn raw manuscripts into publish-ready ebooks in minutes</p>
               </div>
             </div>
-            <div className="hidden md:flex items-center space-x-6">
-              <div className="text-blue-100 text-sm">
-                <span className="inline-flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            
+            <div className="hidden lg:flex items-center gap-8">
+              <div className="flex items-center gap-6 text-white/90">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  Professional Quality
-                </span>
-              </div>
-              <div className="text-blue-100 text-sm">
-                <span className="inline-flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <span className="text-sm font-medium">Professional Quality</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  Instant Preview
-                </span>
+                  <span className="text-sm font-medium">Instant Preview</span>
+                </div>
               </div>
+              
+              <button className="btn-premium btn-outline bg-white/10 border-white/30 text-white hover:bg-white/20">
+                Start Free Trial
+              </button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-4">
-        {/* Modern Control Panel */}
-        <div className="card mb-8 animate-fade-in">
-          <div className="card-content">
-            {/* Alerts */}
-            {uploadError && (
-              <div className="alert alert-error animate-slide-in">
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>{uploadError}</span>
+      {/* Main Content Area */}
+      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+        {/* Onboarding Hero Section */}
+        {showOnboarding && (
+          <div className="text-center mb-12">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="font-serif text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+                Transform Your Manuscript Into a <span className="text-purple-600">Professional Ebook</span>
+              </h2>
+              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                Upload your raw manuscript and watch it transform into a beautifully formatted, 
+                publish-ready ebook in minutes. No design skills required.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+                <button 
+                  onClick={() => setShowOnboarding(false)}
+                  className="btn-premium btn-primary px-8 py-4 text-lg"
+                >
+                  Get Started Free
+                </button>
+                <button 
+                  onClick={handleSampleText}
+                  className="btn-premium btn-outline px-8 py-4 text-lg"
+                >
+                  Try Sample Content
+                </button>
               </div>
-            )}
-            
-            {uploadSuccess && (
-              <div className="alert alert-success animate-slide-in">
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>{uploadSuccess}</span>
+              
+              <div className="grid md:grid-cols-3 gap-6 mt-12">
+                <div className="text-center p-6">
+                  <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-lg text-gray-900 mb-2">Upload Anything</h3>
+                  <p className="text-gray-600">Word docs, text files, or paste directly. We'll handle the rest.</p>
+                </div>
+                
+                <div className="text-center p-6">
+                  <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5H9a2 2 0 00-2 2v12a4 4 0 004 4h10a2 2 0 002-2V7a2 2 0 00-2-2z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-lg text-gray-900 mb-2">Choose Template</h3>
+                  <p className="text-gray-600">Professional templates for every genre and style.</p>
+                </div>
+                
+                <div className="text-center p-6">
+                  <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-lg text-gray-900 mb-2">Download Ready</h3>
+                  <p className="text-gray-600">Export as PDF, EPUB, or DOCX. Ready for publishing platforms.</p>
+                </div>
               </div>
-            )}
+            </div>
+          </div>
+        )}
 
-            <div className="flex flex-col lg:flex-row gap-6">
-              {/* Left Column - Project Info */}
-              <div className="flex-1 space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Details</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="form-group">
-                      <label className="form-label">Book Title</label>
+        {/* Upload Section */}
+        <div className="premium-card mb-8">
+          <div className="premium-card-header">
+            <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">
+              📄 Upload Your Manuscript
+            </h2>
+            <p className="text-gray-600">
+              Start by uploading your document or pasting your content directly
+            </p>
+          </div>
+          <div className="premium-card-content">
+            <div className="grid lg:grid-cols-2 gap-8">
+              <div>
+                <FileUpload 
+                  onFileProcessed={handleFileProcessed}
+                  onError={handleFileError}
+                />
+                
+                <div className="mt-6">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Book Title
+                      </label>
                       <input
                         type="text"
-                        placeholder="Enter your book title"
                         value={bookTitle}
                         onChange={(e) => setBookTitle(e.target.value)}
-                        className="form-input"
+                        placeholder="My Amazing Novel"
+                        className="premium-input w-full"
                       />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">Author Name</label>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Author Name
+                      </label>
                       <input
                         type="text"
-                        placeholder="Enter author name"
                         value={author}
                         onChange={(e) => setAuthor(e.target.value)}
-                        className="form-input"
+                        placeholder="Jane Doe"
+                        className="premium-input w-full"
                       />
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Right Column - Mode & Stats */}
-              <div className="lg:w-80 space-y-4">
-                {/* View Toggle */}
-                <div>
-                  <label className="form-label">Editing Mode</label>
-                  <div className="flex bg-gray-100 rounded-lg p-1">
-                    <button
-                      onClick={() => setCurrentView('simple')}
-                      className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                        currentView === 'simple'
-                          ? 'bg-white text-gray-900 shadow-sm transform scale-[1.02]'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-                      }`}
-                    >
-                      <span className="flex items-center justify-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                        </svg>
-                        Simple
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => setCurrentView('advanced')}
-                      className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                        currentView === 'advanced'
-                          ? 'bg-white text-gray-900 shadow-sm transform scale-[1.02]'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-                      }`}
-                    >
-                      <span className="flex items-center justify-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
-                        </svg>
-                        Advanced
-                      </span>
-                    </button>
+              
+              <div className="space-y-4">
+                <button 
+                  onClick={handleSampleText}
+                  className="btn-premium btn-outline w-full py-4"
+                >
+                  <div className="flex items-center justify-center gap-3">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    Try with Sample Content
                   </div>
-                </div>
-
-                {/* Document Stats */}
-                {documentStructure && (
-                  <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-100">
-                    <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </button>
+                
+                {text.trim() && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 text-emerald-800 mb-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Document Analysis
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="text-gray-600">
-                        <span className="font-medium">{documentStructure.word_count.toLocaleString()}</span> words
-                      </div>
-                      <div className="text-gray-600">
-                        <span className="font-medium">{documentStructure.headings?.length || 0}</span> headings
-                      </div>
-                      <div className="text-gray-600">
-                        <span className="font-medium">{documentStructure.total_lines.toLocaleString()}</span> lines
-                      </div>
-                      <div className="text-gray-600">
-                        <span className="font-medium">{documentStructure.quotes?.length || 0}</span> quotes
-                      </div>
+                      Content Ready!
+                    </div>
+                    <div className="text-sm text-emerald-700">
+                      <p><strong>{text.length.toLocaleString()}</strong> characters</p>
+                      <p><strong>{text.split('\n').length.toLocaleString()}</strong> lines</p>
+                      <p><strong>{parsedContent.length}</strong> content blocks detected</p>
                     </div>
                   </div>
                 )}
@@ -351,47 +404,65 @@ The room was exactly as her grandmother had described it - filled with countless
           </div>
         </div>
 
-        {/* File Upload Section */}
-        <FileUpload
-          onFileProcessed={handleFileProcessed}
-          onError={handleFileError}
-        />
+        {/* Template Selection */}
+        {text.trim() && (
+          <div className="premium-card mb-8">
+            <div className="premium-card-header">
+              <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">
+                🎨 Choose Your Template
+              </h2>
+              <p className="text-gray-600">
+                Select a professional template that matches your content style
+              </p>
+            </div>
+            <div className="premium-card-content">
+              <TemplateShowcase 
+                selectedTemplate={selectedTemplate}
+                onSelectTemplate={handleTemplateChange}
+                showDescription={false}
+              />
+            </div>
+          </div>
+        )}
 
-        {/* Simple Mode Quick Actions */}
-        {currentView === 'simple' && (
-          <div className="card mb-8 animate-fade-in">
-            <div className="card-content">
-              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
-                {/* Template Selector */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Template:</label>
-                    <select
-                      value={selectedTemplate}
-                      onChange={(e) => handleTemplateChange(e.target.value)}
-                      className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
-                    >
-                      {Object.entries(templates).map(([key, template]) => (
-                        <option key={key} value={key}>
-                          {template.name} - {template.description}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+        {/* Content Editor and Preview */}
+        {text.trim() && (
+          <div className="premium-card mb-8">
+            <div className="premium-card-header">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">
+                    🚀 Edit & Preview
+                  </h2>
+                  <p className="text-gray-600">
+                    Make final adjustments and see your formatted ebook
+                  </p>
                 </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setText(sampleText)}
-                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    Sample Text
-                  </button>
-
+                
+                <div className="flex items-center gap-4">
+                  <div className="flex bg-gray-100 rounded-lg p-1">
+                    <button
+                      onClick={() => setCurrentView('simple')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        currentView === 'simple'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Simple
+                    </button>
+                    <button
+                      onClick={() => setCurrentView('advanced')}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        currentView === 'advanced'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Advanced
+                    </button>
+                  </div>
+                  
                   {text.trim() && (
                     <DownloadButton
                       text={text}
@@ -403,353 +474,141 @@ The room was exactly as her grandmother had described it - filled with countless
                 </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Layout based on view mode */}
-        {currentView === 'simple' ? (
-          /* Clean Two-Column Layout */
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-            {/* Content Editor */}
-            <div className="card">
-              <div className="card-header">
-                <div className="flex items-center justify-between">
+            <div className="premium-card-content">
+              {currentView === 'simple' ? (
+                /* Simple Two-Column Layout */
+                <div className="grid lg:grid-cols-2 gap-8">
+                  {/* Content Editor */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Content Editor</h3>
-                    <p className="text-sm text-gray-600">
-                      {text.trim() ? 'Edit your manuscript or upload a new document' : 'Write your story or upload a document to get started'}
-                    </p>
-                  </div>
-                  {text.trim() && (
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-gray-900">{text.length.toLocaleString()}</div>
-                      <div className="text-xs text-gray-500">characters</div>
+                    <h3 className="font-semibold text-lg text-gray-900 mb-3">Content Editor</h3>
+                    <textarea
+                      ref={textareaRef}
+                      value={text}
+                      onChange={handleCursorPositionChange}
+                      onClick={handleTextareaClick}
+                      onKeyUp={(e) => setCursorPosition((e.target as HTMLTextAreaElement).selectionStart)}
+                      placeholder="Chapter 1\nThe Beginning\n\nIt was a dark and stormy night..."
+                      className="premium-input premium-textarea w-full min-h-[400px]"
+                    />
+                    <div className="text-xs text-gray-500 mt-2">
+                      {text.split('\n').length} lines | {text.length} characters | Cursor: {cursorPosition}
                     </div>
-                  )}
-                </div>
-              </div>
-              <div className="card-content pt-0">
-                <div className="relative">
-                  <textarea
-                    ref={textareaRef}
-                    value={text}
-                    onChange={handleCursorPositionChange}
-                    onClick={handleTextareaClick}
-                    onKeyUp={(e) => setCursorPosition((e.target as HTMLTextAreaElement).selectionStart)}
-                    placeholder="Chapter 1\nThe Beginning\n\nIt was a dark and stormy night...\n\n[IMAGE:chapter1.jpg]\n\nThe story continues here..."
-                    className="w-full min-h-[500px] max-h-[800px] p-4 border-0 resize-y focus:outline-none focus:ring-0 text-sm leading-relaxed transition-all bg-transparent"
-                    style={{ 
-                      fontFamily: 'var(--font-mono, monospace)',
-                      height: Math.max(500, Math.min(800, (text.split('\n').length * 24) + 100)) + 'px'
-                    }}
-                  />
-                  <div className="absolute bottom-4 right-4 text-xs text-gray-400 bg-white/90 backdrop-blur-sm px-2 py-1 rounded border border-gray-200 shadow-sm">
-                    {text.split('\n').length} lines
-                  </div>
-                </div>
-                
-                {/* Compact Image Upload for Simple Mode */}
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-medium text-gray-700">Add Images</h4>
-                    <span className="text-xs text-gray-500">Cursor: {cursorPosition}</span>
-                  </div>
-                  <ImageUpload 
-                    onImageInsert={handleImageInsert}
-                    disabled={false}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Live Preview */}
-            <div className="card">
-              <div className="card-header">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Live Preview</h3>
-                    <p className="text-sm text-gray-600">
-                      {templates[selectedTemplate]?.name} template • Real-time formatting
-                    </p>
-                  </div>
-                  {text.trim() && (
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                        {parsedContent.length} elements
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="card-content pt-0">
-                <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
-                  <PreviewPane 
-                    content={parsedContent}
-                    template={selectedTemplate}
-                    customStyles={fontStyles}
-                    uploadedImages={uploadedImages}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Advanced Tabbed Layout */
-          <div className="animate-fade-in">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left Panel - Tabbed Editor & Controls */}
-              <div className="card">
-                {/* Tab Navigation */}
-                <div className="border-b border-gray-200">
-                  <nav className="flex space-x-8 px-6 pt-4" aria-label="Tabs">
-                    <button
-                      onClick={() => setAdvancedTab('editor')}
-                      className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                        advancedTab === 'editor'
-                          ? 'border-blue-500 text-blue-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Content Editor
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => setAdvancedTab('typography')}
-                      className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                        advancedTab === 'typography'
-                          ? 'border-blue-500 text-blue-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5H9a2 2 0 00-2 2v12a4 4 0 004 4h10a2 2 0 002-2V7a2 2 0 00-2-2z" />
-                        </svg>
-                        Typography Controls
-                      </div>
-                    </button>
-                  </nav>
-                </div>
-
-                {/* Tab Content */}
-                <div className="card-content">
-                  {advancedTab === 'editor' ? (
-                    /* Content Editor Tab */
-                    <div>
-                      <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">Manuscript Editor</h3>
-                        <p className="text-sm text-gray-600">Edit your content and see changes instantly in the preview</p>
-                      </div>
-                      
-                      <textarea
-                        ref={textareaRef}
-                        value={text}
-                        onChange={handleCursorPositionChange}
-                        onClick={handleTextareaClick}
-                        onKeyUp={(e) => setCursorPosition((e.target as HTMLTextAreaElement).selectionStart)}
-                        placeholder="Chapter 1\nThe Beginning\n\n[FULLPAGE:chapter1-cover.jpg]\n\nIt was a dark and stormy night...\n\nYour story continues here..."
-                        className="w-full min-h-[400px] max-h-[600px] p-4 border border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm leading-relaxed transition-all"
-                        style={{ 
-                          fontFamily: 'var(--font-mono, monospace)',
-                          height: Math.max(400, Math.min(600, (text.split('\n').length * 22) + 80)) + 'px'
-                        }}
+                    
+                    {/* Image Upload */}
+                    <div className="mt-4">
+                      <h4 className="font-semibold text-sm text-gray-900 mb-2">Add Images</h4>
+                      <ImageUpload 
+                        onImageInsert={handleImageInsert}
+                        disabled={false}
                       />
-                      
-                      {/* Image Upload Section */}
-                      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <h4 className="text-sm font-semibold text-gray-900 mb-1">Insert Images</h4>
-                            <p className="text-xs text-gray-600">Upload and insert images at your cursor position</p>
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            Position: {cursorPosition}
-                          </div>
-                        </div>
-                        <ImageUpload 
-                          onImageInsert={handleImageInsert}
-                          disabled={false}
-                        />
-                        
-                        {/* Uploaded Images Manager */}
-                        {Object.keys(uploadedImages).length > 0 && (
-                          <div className="mt-4 pt-4 border-t border-blue-200">
-                            <h5 className="text-xs font-medium text-gray-700 mb-2">Uploaded Images ({Object.keys(uploadedImages).length})</h5>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                              {Object.entries(uploadedImages).map(([filename, imageData]) => (
-                                <div key={filename} className="group relative">
-                                  <div className="aspect-square bg-gray-100 rounded border overflow-hidden">
-                                    <img 
-                                      src={imageData} 
-                                      alt={filename}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  </div>
-                                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
-                                    <div className="flex gap-1">
-                                      <button
-                                        onClick={() => {
-                                          const placeholder = `[IMAGE:${filename}]`;
-                                          const beforeCursor = text.substring(0, cursorPosition);
-                                          const afterCursor = text.substring(cursorPosition);
-                                          setText(beforeCursor + '\n' + placeholder + '\n' + afterCursor);
-                                        }}
-                                        className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700"
-                                        title="Insert as inline image"
-                                      >
-                                        Inline
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          const placeholder = `[FULLPAGE:${filename}]`;
-                                          const beforeCursor = text.substring(0, cursorPosition);
-                                          const afterCursor = text.substring(cursorPosition);
-                                          setText(beforeCursor + '\n' + placeholder + '\n' + afterCursor);
-                                        }}
-                                        className="px-2 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700"
-                                        title="Insert as full-page image"
-                                      >
-                                        Full
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <p className="text-xs text-gray-600 mt-1 truncate" title={filename}>{filename}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Quick Actions */}
-                      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3">
-                              <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Template:</label>
-                              <select
-                                value={selectedTemplate}
-                                onChange={(e) => handleTemplateChange(e.target.value)}
-                                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
-                              >
-                                {Object.entries(templates).map(([key, template]) => (
-                                  <option key={key} value={key}>
-                                    {template.name} - {template.description}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
+                    </div>
+                  </div>
+                  
+                  {/* Live Preview */}
+                  <div>
+                    <h3 className="font-semibold text-lg text-gray-900 mb-3">Live Preview</h3>
+                    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                      <PreviewPane 
+                        content={parsedContent}
+                        template={selectedTemplate}
+                        customStyles={fontStyles}
+                        uploadedImages={uploadedImages}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Advanced Mode with Tabs */
+                <div className="grid lg:grid-cols-2 gap-8">
+                  {/* Tabbed Left Panel */}
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    {/* Tab Navigation */}
+                    <div className="border-b border-gray-200 bg-gray-50">
+                      <nav className="flex" aria-label="Tabs">
+                        <button
+                          onClick={() => setAdvancedTab('editor')}
+                          className={`flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm transition-colors ${
+                            advancedTab === 'editor'
+                              ? 'border-purple-500 text-purple-600 bg-white'
+                              : 'border-transparent text-gray-500 hover:text-gray-700'
+                          }`}
+                        >
+                          Content Editor
+                        </button>
+                        <button
+                          onClick={() => setAdvancedTab('typography')}
+                          className={`flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm transition-colors ${
+                            advancedTab === 'typography'
+                              ? 'border-purple-500 text-purple-600 bg-white'
+                              : 'border-transparent text-gray-500 hover:text-gray-700'
+                          }`}
+                        >
+                          Typography
+                        </button>
+                      </nav>
+                    </div>
+
+                    {/* Tab Content */}
+                    <div className="p-4">
+                      {advancedTab === 'editor' ? (
+                        <div>
+                          <textarea
+                            ref={textareaRef}
+                            value={text}
+                            onChange={handleCursorPositionChange}
+                            onClick={handleTextareaClick}
+                            onKeyUp={(e) => setCursorPosition((e.target as HTMLTextAreaElement).selectionStart)}
+                            className="premium-input premium-textarea w-full min-h-[300px] mb-4"
+                          />
+                          <div className="text-xs text-gray-500 mb-4">
+                            Cursor: {cursorPosition} | Lines: {text.split('\n').length}
                           </div>
                           
-                          {text.trim() && (
-                            <DownloadButton
-                              text={text}
-                              templateName={selectedTemplate}
-                              title={bookTitle}
-                              author={author}
+                          <div>
+                            <h4 className="font-semibold text-sm text-gray-900 mb-2">Add Images</h4>
+                            <ImageUpload 
+                              onImageInsert={handleImageInsert}
+                              disabled={false}
                             />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    /* Typography Controls Tab */
-                    <div>
-                      <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">Typography Controls</h3>
-                        <p className="text-sm text-gray-600">Customize fonts, sizes, and styling for each element</p>
-                      </div>
-                      
-                      <div className="h-[500px] overflow-y-auto">
-                        <div className="space-y-4">
-                          {Object.keys(fontStyles).map(elementType => (
-                            <FontControls
-                              key={elementType}
-                              elementType={elementType}
-                              currentStyle={fontStyles[elementType]}
-                              onStyleChange={handleFontStyleChange}
-                            />
-                          ))}
-                        </div>
-                        
-                        <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-                          <div className="flex items-start gap-3">
-                            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-blue-900 mb-1">Pro Tips</p>
-                              <p className="text-xs text-blue-700">
-                                Switch to the Live Preview (right panel) to see your changes instantly. All typography changes apply in real-time!
-                              </p>
-                            </div>
                           </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="h-[400px] overflow-y-auto">
+                          <div className="space-y-4">
+                            {Object.keys(fontStyles).map(elementType => (
+                              <FontControls
+                                key={elementType}
+                                elementType={elementType}
+                                currentStyle={fontStyles[elementType]}
+                                onStyleChange={handleFontStyleChange}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
-
-            {/* Preview Pane */}
-            <div className="card">
-              <div className="card-header py-4">
-                <div className="card-title flex items-center gap-2 text-base">
-                  <div className="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center">
-                    <svg className="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
                   </div>
-                  Live Preview
+                  
+                  {/* Live Preview */}
+                  <div>
+                    <h3 className="font-semibold text-lg text-gray-900 mb-3">Live Preview</h3>
+                    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                      <PreviewPane 
+                        content={parsedContent}
+                        template={selectedTemplate}
+                        customStyles={fontStyles}
+                        uploadedImages={uploadedImages}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="card-description text-xs">
-                  Dynamic formatting preview
-                </div>
-              </div>
-              <div className="card-content pt-0">
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <PreviewPane 
-                    content={parsedContent}
-                    template={selectedTemplate}
-                    customStyles={fontStyles}
-                    uploadedImages={uploadedImages}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        )}
-
-        {/* Template Description */}
-        {templates[selectedTemplate] && (
-          <div className="mt-8 card animate-fade-in">
-            <div className="card-content">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5H9a2 2 0 00-2 2v12a4 4 0 004 4h10a2 2 0 002-2V7a2 2 0 00-2-2z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                    {templates[selectedTemplate].name} Template
-                  </h3>
-                  <p className="text-gray-600">
-                    {templates[selectedTemplate].description}
-                  </p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         )}
+        
+        {/* Toast Notifications */}
+        <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
       </main>
     </div>
   );
