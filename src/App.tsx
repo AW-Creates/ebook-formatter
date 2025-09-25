@@ -1,142 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import './App.css';
 import './styles/modern.css';
 import './styles/brand.css';
-import { parseText } from './utils/textParser';
-import PreviewPane from './components/PreviewPane';
-import DownloadButton from './components/DownloadButton';
-import FileUpload from './components/FileUpload';
-import FontControls from './components/FontControls';
 import ImageUpload from './components/ImageUpload';
-import TemplateShowcase from './components/TemplateShowcase';
 import { useToast, ToastContainer } from './components/Toast';
 
-interface FontStyle {
-  fontFamily: string;
-  fontSize: string;
-  fontWeight: string;
-  color: string;
-  lineHeight: string;
-  letterSpacing: string;
-  textAlign: string;
-  marginTop: string;
-  marginBottom: string;
-}
 
 const App: React.FC = () => {
   const [text, setText] = useState<string>('');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('classic');
-  const [parsedContent, setParsedContent] = useState<any[]>([]);
-  const [bookTitle, setBookTitle] = useState<string>('Untitled Book');
-  const [author, setAuthor] = useState<string>('Anonymous');
-  const [currentView, setCurrentView] = useState<'simple' | 'advanced'>('simple');
-  const [advancedTab, setAdvancedTab] = useState<'editor' | 'typography'>('editor');
+  const [bookTitle] = useState<string>('Untitled Book');
   const [uploadedImages, setUploadedImages] = useState<Record<string, string>>({});
   const [cursorPosition, setCursorPosition] = useState<number>(0);
-  const [workflowStep, setWorkflowStep] = useState<'upload' | 'template' | 'customize' | 'preview' | 'export'>('upload');
-  const [showOnboarding, setShowOnboarding] = useState(true);
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const toast = useToast();
-  
-  // Font styles for different elements
-  const [fontStyles, setFontStyles] = useState<Record<string, FontStyle>>({
-    h1: {
-      fontFamily: 'Georgia, serif',
-      fontSize: '24px',
-      fontWeight: '600',
-      color: '#1a1a1a',
-      lineHeight: '1.2',
-      letterSpacing: '0px',
-      textAlign: 'center',
-      marginTop: '60px',
-      marginBottom: '40px'
-    },
-    h2: {
-      fontFamily: 'Georgia, serif',
-      fontSize: '20px',
-      fontWeight: '600',
-      color: '#1a1a1a',
-      lineHeight: '1.3',
-      letterSpacing: '0px',
-      textAlign: 'left',
-      marginTop: '40px',
-      marginBottom: '20px'
-    },
-    paragraph: {
-      fontFamily: 'Georgia, serif',
-      fontSize: '14px',
-      fontWeight: '400',
-      color: '#2a2a2a',
-      lineHeight: '1.6',
-      letterSpacing: '0px',
-      textAlign: 'justify',
-      marginTop: '0px',
-      marginBottom: '20px'
-    },
-    quote: {
-      fontFamily: 'Georgia, serif',
-      fontSize: '14px',
-      fontWeight: '400',
-      color: '#555555',
-      lineHeight: '1.5',
-      letterSpacing: '0px',
-      textAlign: 'left',
-      marginTop: '20px',
-      marginBottom: '20px'
-    }
-  });
-
-  // Parse text whenever it changes
-  useEffect(() => {
-    if (text.trim()) {
-      const parsed = parseText(text);
-      setParsedContent(parsed);
-      if (workflowStep === 'upload') {
-        setWorkflowStep('template');
-      }
-    } else {
-      setParsedContent([]);
-    }
-  }, [text, workflowStep]);
-
-  const handleFileProcessed = (extractedText: string, filename: string) => {
-    setText(extractedText);
-    
-    // Extract title from filename if not set
-    if (bookTitle === 'Untitled Book') {
-      const nameWithoutExt = filename.replace(/\.[^/.]+$/, "");
-      setBookTitle(nameWithoutExt);
-    }
-
-    // Progress workflow and show success
-    setWorkflowStep('template');
-    toast.showSuccess(
-      'Document uploaded successfully!',
-      `Loaded "${filename}" with ${extractedText.split('\n').length} lines. Choose a template next.`
-    );
-  };
-
-  const handleFileError = (error: string) => {
-    toast.showError('Upload failed', error);
-  };
-
-  const handleFontStyleChange = (elementType: string, newStyle: FontStyle) => {
-    setFontStyles(prev => ({
-      ...prev,
-      [elementType]: newStyle
-    }));
-  };
-
-  const handleCursorPositionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setText(e.target.value);
-    setCursorPosition(e.target.selectionStart);
-  };
-
-  const handleTextareaClick = (e: React.MouseEvent<HTMLTextAreaElement>) => {
-    const target = e.target as HTMLTextAreaElement;
-    setCursorPosition(target.selectionStart);
-  };
 
   const handleImageInsert = (imageData: string, filename: string, isFullPage: boolean) => {
     // Store the image data
@@ -174,13 +52,6 @@ const App: React.FC = () => {
     }, 100);
   };
 
-  const handleTemplateChange = (templateName: string) => {
-    setSelectedTemplate(templateName);
-    toast.showInfo(
-      'Template updated',
-      `Switched to ${templateName} template. Check the preview to see changes.`
-    );
-  };
 
   const handleSampleText = () => {
     const sampleText = `My Amazing Novel
@@ -200,8 +71,6 @@ Inside the mansion, dust particles danced in the pale moonlight that filtered th
 The room was exactly as her grandmother had described it - filled with countless books that reached from floor to ceiling. But it was the old wooden desk in the center that caught her attention.`;
 
     setText(sampleText);
-    setWorkflowStep('template');
-    setShowOnboarding(false);
     toast.showInfo(
       'Sample content loaded',
       'Try different templates and see how your content looks!'
@@ -269,10 +138,10 @@ The room was exactly as her grandmother had described it - filled with countless
           </div>
           
           <nav className="space-x-8 text-sm font-medium">
-            <a href="#" className="hover:text-cyan-400 transition">Pricing</a>
-            <a href="#" className="hover:text-cyan-400 transition">Docs</a>
-            <a href="#" className="hover:text-cyan-400 transition">Help</a>
-            <a href="#" className="hover:text-cyan-400 transition">Login</a>
+            <button className="hover:text-cyan-400 transition">Pricing</button>
+            <button className="hover:text-cyan-400 transition">Docs</button>
+            <button className="hover:text-cyan-400 transition">Help</button>
+            <button className="hover:text-cyan-400 transition">Login</button>
           </nav>
         </div>
       </header>
