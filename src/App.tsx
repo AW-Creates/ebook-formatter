@@ -94,6 +94,7 @@ The room was exactly as her grandmother had described it - filled with countless
           const cleanContent = content
             .replace(/\r\n/g, '\n') // Normalize line endings
             .replace(/\r/g, '\n')
+            // eslint-disable-next-line no-control-regex
             .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '') // Remove control characters
             .trim();
             
