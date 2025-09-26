@@ -106,9 +106,7 @@
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-primary);
   backdrop-filter: blur(12px);
-  position: sticky;
-  top: 0;
-  z-index: 40;
+  /* Removed sticky positioning for better UX */
 }
 
 .brand-logo {

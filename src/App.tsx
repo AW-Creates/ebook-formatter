@@ -153,8 +153,8 @@ The room was exactly as her grandmother had described it - filled with countless
 
   return (
     <div className="min-h-screen bg-[#1A1A1A] text-gray-200 flex flex-col font-sans relative">
-      {/* Dark Theme Header */}
-      <header className="dark-header">
+      {/* Dark Theme Header - Remove sticky positioning */}
+      <header className="bg-[#1A1A1A] border-b border-gray-800">
         <div className="flex items-center justify-between px-8 py-5">
           <div className="flex items-center gap-3">
             {/* Brand Logo */}
@@ -179,8 +179,8 @@ The room was exactly as her grandmother had described it - filled with countless
         </div>
       </header>
 
-      {/* Plan Ribbon / Upgrade CTA */}
-      <div className="sticky top-[68px] z-30 border-b border-gray-800 bg-gradient-to-r from-[#1E1E1E] to-[#1E1E1E]/60">
+      {/* Plan Ribbon / Upgrade CTA - Remove sticky positioning */}
+      <div className="border-b border-gray-800 bg-gradient-to-r from-[#1E1E1E] to-[#1E1E1E]/60">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between text-sm">
           <div className="text-gray-400">
             You're on <span className="text-gray-200 font-medium">Free</span> • Pro unlocks additional templates, DOCX export, and brand presets.
@@ -292,7 +292,7 @@ The room was exactly as her grandmother had described it - filled with countless
           </div>
           
           {/* Right Panel - Live Preview */}
-          <div className="bg-gray-800 rounded-2xl p-8 border border-gray-600">
+          <div className="bg-gray-800 rounded-2xl p-8 border border-gray-600 flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-white">Live Preview</h3>
               <div className="flex items-center space-x-2 text-sm text-gray-400">
@@ -301,7 +301,7 @@ The room was exactly as her grandmother had described it - filled with countless
               </div>
             </div>
             
-            <div className="bg-white rounded-xl p-8 h-[600px] max-h-[600px] shadow-inner overflow-y-auto overflow-x-hidden">
+            <div className="bg-white rounded-xl p-6 shadow-inner preview-container">
               {formattedSections.length > 0 ? (
                 <div 
                   className="prose prose-lg max-w-none"
