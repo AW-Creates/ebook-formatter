@@ -44,6 +44,24 @@
   overflow-x: auto;
 }
 
+/* Fix for preview panel height */
+.preview-panel {
+  min-height: 600px;
+  max-height: 80vh;
+}
+
+/* Fix overlapping issues */
+.main-content {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Ensure proper spacing */
+.content-wrapper {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 .preview-container::-webkit-scrollbar {
   width: 8px;
   height: 8px;

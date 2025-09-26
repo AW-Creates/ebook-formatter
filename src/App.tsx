@@ -26,7 +26,7 @@ export default function EbookFormatterUI() {
   return (
     <div className="min-h-screen bg-[#1A1A1A] text-gray-200 flex flex-col font-sans relative">
       {/* ===== Header ===== */}
-      <header className="flex items-center justify-between px-8 py-5 border-b border-gray-700 bg-[#1E1E1E]/80 backdrop-blur-md sticky top-0 z-40">
+      <header className="flex items-center justify-between px-8 py-5 border-b border-gray-700 bg-[#1E1E1E]">
         <div className="flex items-center gap-3">
           {/* Brand Logo (swap with your SVG/PNG) */}
           <div className="h-8 w-8 rounded-xl bg-cyan-400 grid place-items-center text-black font-extrabold">Ef</div>
@@ -46,7 +46,7 @@ export default function EbookFormatterUI() {
       </header>
 
       {/* ===== Plan Ribbon / Upgrade CTA ===== */}
-      <div className="sticky top-[68px] z-30 border-b border-gray-800 bg-gradient-to-r from-[#1E1E1E] to-[#1E1E1E]/60">
+      <div className="border-b border-gray-800 bg-gradient-to-r from-[#1E1E1E] to-[#1E1E1E]/60">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between text-sm">
           <div className="text-gray-400">You're on <span className="text-gray-200 font-medium">Free</span> · Pro unlocks additional templates, DOCX export, and brand presets.</div>
           <div className="flex items-center gap-2">
@@ -58,7 +58,7 @@ export default function EbookFormatterUI() {
       </div>
 
       {/* ===== Main Content ===== */}
-      <main className="flex flex-1 flex-col items-center justify-center px-6 py-12">
+      <main className="flex flex-1 flex-col items-center px-6 py-12">
         <div className="w-full max-w-6xl bg-[#232323] rounded-3xl border border-gray-700 shadow-2xl p-12 grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* ===== Left Side: Upload + Options ===== */}
           <div>
@@ -221,9 +221,9 @@ export default function EbookFormatterUI() {
           </div>
 
           {/* ===== Right Side: Interactive Preview Panel ===== */}
-          <div className="bg-[#1A1A1A] rounded-2xl border border-gray-700 shadow-inner overflow-hidden flex flex-col">
+          <div className="bg-[#1A1A1A] rounded-2xl border border-gray-700 shadow-inner overflow-hidden flex flex-col preview-panel">
             {/* Preview Toolbar */}
-            <div className="flex items-center justify-between gap-3 border-b border-gray-700 px-4 py-3 bg-[#1E1E1E] sticky top-0">
+            <div className="flex items-center justify-between gap-3 border-b border-gray-700 px-4 py-3 bg-[#1E1E1E]">
               {/* View Mode Toggle */}
               <div className="inline-flex rounded-xl overflow-hidden border border-gray-700">
                 <button className="px-3 py-2 text-sm bg-cyan-400/20 text-cyan-300 hover:bg-cyan-400/30 transition">Ebook</button>
@@ -252,11 +252,11 @@ export default function EbookFormatterUI() {
             {/* Rulers */}
             <div className="relative">
               <div className="h-6 bg-[#141414] border-b border-gray-800 text-[10px] text-gray-500 flex items-end px-6 tracking-wider">0 1 2 3 4 5 6</div>
-              <div className="absolute top-6 left-0 w-6 bottom-0 bg-[#141414] border-r border-gray-800 text-[10px] text-gray-500 flex flex-col items-center py-4 gap-6">0 1 2 3 4 5 6</div>
+              <div className="absolute top-6 left-0 w-6 h-[400px] bg-[#141414] border-r border-gray-800 text-[10px] text-gray-500 flex flex-col items-center py-4 gap-6">0 1 2 3 4 5 6</div>
             </div>
 
             {/* Preview Body */}
-            <div className="flex-1 grid grid-cols-6">
+            <div className="flex-1 grid grid-cols-6" style={{minHeight: '500px'}}>
               {/* Thumbnails */}
               <aside className="hidden md:block col-span-1 border-r border-gray-800 bg-[#181818] overflow-y-auto p-3 space-y-3">
                 {Array.from({ length: 8 }).map((_, i) => (
@@ -267,7 +267,7 @@ export default function EbookFormatterUI() {
               </aside>
 
               {/* Page Canvas + Guides + Compare */}
-              <section className="col-span-6 md:col-span-5 bg-[#111111] p-6 overflow-auto">
+              <section className="col-span-6 md:col-span-5 bg-[#111111] p-6 overflow-auto" style={{minHeight: '450px'}}>
                 <div className="grid gap-6 md:grid-cols-1 xl:grid-cols-2">
                   {/* Left Preview (Current Template) */}
                   <div className="grid place-items-center">
@@ -424,7 +424,7 @@ export default function EbookFormatterUI() {
 
       {/* ===== Preflight Drawer ===== */}
       {isPreflightOpen && (
-        <aside className="fixed right-0 top-[112px] bottom-0 w-full sm:w-[380px] z-50 bg-[#1E1E1E] border-l border-gray-700 shadow-2xl p-5 overflow-y-auto" aria-label="Preflight">
+        <aside className="fixed right-0 top-0 bottom-0 w-full sm:w-[380px] z-50 bg-[#1E1E1E] border-l border-gray-700 shadow-2xl p-5 overflow-y-auto" aria-label="Preflight">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-amber-300">Preflight</h4>
             <button onClick={() => setPreflightOpen(false)} className="text-xs px-2 py-1 rounded-lg border border-gray-700 text-gray-300 hover:border-cyan-400 hover:text-cyan-300 transition">Close</button>
@@ -471,19 +471,6 @@ export default function EbookFormatterUI() {
         </aside>
       )}
 
-      {/* ===== Success Toast (visible mock) ===== */}
-      <div className="fixed bottom-6 right-6 z-50" aria-live="polite">
-        <div className="bg-[#1E1E1E] border border-gray-700 rounded-xl shadow-xl px-4 py-3 flex items-start gap-3">
-          <div className="h-6 w-6 rounded-full bg-cyan-400/20 border border-cyan-400/40 grid place-items-center">
-            <span className="text-cyan-300 text-sm">✓</span>
-          </div>
-          <div className="text-sm">
-            <div className="text-gray-100 font-medium">Export complete</div>
-            <div className="text-gray-400">Your PDF is ready to download.</div>
-          </div>
-          <button className="ml-2 text-sm px-3 py-1.5 rounded-lg bg-cyan-400 text-black font-semibold hover:bg-cyan-300 transition">Open</button>
-        </div>
-      </div>
 
       {/* ===== Footer ===== */}
       <footer className="px-8 py-8 border-t border-gray-700 text-center text-gray-500 text-sm z-10">
