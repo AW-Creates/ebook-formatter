@@ -5,6 +5,7 @@ import './styles/brand.css';
 import ImageUpload from './components/ImageUpload';
 import DownloadButton from './components/DownloadButton';
 import { useToast, ToastContainer } from './components/Toast';
+import { parseDocument, validateFileSize, isSupportedFileType } from './utils/documentParser';
 
 
 const App: React.FC = () => {
@@ -78,48 +79,57 @@ The room was exactly as her grandmother had described it - filled with countless
     );
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    
-    // Only handle text files directly
-    if (fileExtension === 'txt') {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target?.result as string;
-        if (content) {
-          // Clean the content to remove any potential encoding issues
-          const cleanContent = content
-            .replace(/\r\n/g, '\n') // Normalize line endings
-            .replace(/\r/g, '\n')
-            // eslint-disable-next-line no-control-regex
-            .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '') // Remove control characters
-            .trim();
-            
-          setText(cleanContent);
-          toast.showSuccess(
-            'File uploaded successfully!',
-            `Loaded "${file.name}" with ${cleanContent.split('\n').length} lines.`
-          );
-        }
-      };
-      reader.readAsText(file, 'UTF-8'); // Explicitly specify UTF-8 encoding
-    } else if (fileExtension === 'docx' || fileExtension === 'doc' || fileExtension === 'pdf') {
-      // For binary files, show a message that they need to be converted first
-      toast.showError(
-        'File type not directly supported',
-        `${fileExtension?.toUpperCase()} files need to be converted to text first. Please save your document as a .txt file and upload it again.`
-      );
-      // Clear the input
-      event.target.value = '';
-    } else {
+    // Validate file type
+    if (!isSupportedFileType(file.name)) {
       toast.showError(
         'Unsupported file type',
-        'Please upload a .txt file for direct text processing.'
+        'Please upload TXT, DOCX, or DOC files.'
       );
-      // Clear the input
+      event.target.value = '';
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (!validateFileSize(file, 10)) {
+      toast.showError(
+        'File too large',
+        'Please upload files smaller than 10MB.'
+      );
+      event.target.value = '';
+      return;
+    }
+
+    // Show loading state
+    toast.showInfo(
+      'Processing file...',
+      'Extracting text content from your document.'
+    );
+
+    try {
+      const result = await parseDocument(file);
+      
+      if (result.success) {
+        setText(result.text);
+        toast.showSuccess(
+          'File uploaded successfully!',
+          `Loaded "${result.fileName}" with ${result.wordCount} words and ${result.lineCount} lines.`
+        );
+      } else {
+        toast.showError(
+          'Failed to parse document',
+          result.error || 'Unknown error occurred while processing the file.'
+        );
+        event.target.value = '';
+      }
+    } catch (error) {
+      toast.showError(
+        'Upload failed',
+        'An unexpected error occurred while processing your file.'
+      );
       event.target.value = '';
     }
   };
@@ -184,7 +194,7 @@ The room was exactly as her grandmother had described it - filled with countless
                 <div className="space-y-3">
                   <input
                     type="file"
-                    accept=".txt"
+                    accept=".txt,.docx,.doc"
                     onChange={handleFileUpload}
                     className="hidden"
                     id="file-upload"
@@ -197,8 +207,8 @@ The room was exactly as her grandmother had described it - filled with countless
                       <svg className="mx-auto h-8 w-8 text-cyan-400 group-hover:text-cyan-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                       </svg>
-                      <p className="text-cyan-400 group-hover:text-cyan-300 font-medium">Upload text file or drag & drop</p>
-                      <p className="text-gray-400 text-xs mt-1">TXT files up to 10MB</p>
+                      <p className="text-cyan-400 group-hover:text-cyan-300 font-medium">Upload document or drag & drop</p>
+                      <p className="text-gray-400 text-xs mt-1">TXT, DOCX, DOC files up to 10MB</p>
                     </div>
                   </label>
                   

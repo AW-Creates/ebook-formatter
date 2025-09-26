@@ -1,0 +1,26 @@
+The Adventures of Digital Publishing
+
+Chapter 1
+Getting Started
+
+Welcome to the world of ebook formatting! This is a sample document to test how our application handles text content.
+
+This paragraph demonstrates how regular text flows in the preview window. The text should be clean, readable, and properly formatted according to the selected template.
+
+Chapter 2
+Advanced Features
+
+Our formatter supports various features including:
+- Chapter detection
+- Title formatting
+- Proper line spacing
+- Multiple template styles
+
+This content will help verify that the preview container has proper height and scrolling behavior, preventing the page from stretching infinitely.
+
+Chapter 3
+Testing Complete
+
+This final chapter ensures we have enough content to test the scrolling functionality within the fixed-height preview container.
+
+The End
