@@ -1,11 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import './App.css';
 import './styles/modern.css';
 import './styles/brand.css';
+import './styles/enhanced-templates.css';
 import ImageUpload from './components/ImageUpload';
 import DownloadButton from './components/DownloadButton';
 import { useToast, ToastContainer } from './components/Toast';
 import { parseDocument, validateFileSize, isSupportedFileType } from './utils/documentParser';
+import { createFormatter, FormattedSection } from './utils/textFormatter';
 
 
 const App: React.FC = () => {
@@ -13,10 +15,24 @@ const App: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('classic');
   const [bookTitle] = useState<string>('Untitled Book');
   const [uploadedImages, setUploadedImages] = useState<Record<string, string>>({});
+  const [formattedSections, setFormattedSections] = useState<FormattedSection[]>([]);
   const [cursorPosition, setCursorPosition] = useState<number>(0);
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const toast = useToast();
+
+  // Enhanced text formatting with the new engine
+  const formatter = useMemo(() => createFormatter({ template: selectedTemplate }), [selectedTemplate]);
+  
+  // Update formatted sections when text or template changes
+  useMemo(() => {
+    if (text.trim()) {
+      const sections = formatter.formatText(text);
+      setFormattedSections(sections);
+    } else {
+      setFormattedSections([]);
+    }
+  }, [text, formatter]);
 
   const handleImageInsert = (imageData: string, filename: string, isFullPage: boolean) => {
     // Store the image data
@@ -260,6 +276,8 @@ The room was exactly as her grandmother had described it - filled with countless
                     templateName={selectedTemplate}
                     title={bookTitle}
                     author="Anonymous"
+                    uploadedImages={uploadedImages}
+                    formattedSections={formattedSections}
                   />
                 ) : (
                   <button
@@ -284,79 +302,13 @@ The room was exactly as her grandmother had described it - filled with countless
             </div>
             
             <div className="bg-white rounded-xl p-8 h-[600px] max-h-[600px] shadow-inner overflow-y-auto overflow-x-hidden">
-              {text.trim() ? (
+              {formattedSections.length > 0 ? (
                 <div 
-                  className={`prose prose-lg max-w-none ${
-                    selectedTemplate === 'classic' ? 'font-serif' : 'font-sans'
-                  }`}
-                  style={{
-                    fontFamily: selectedTemplate === 'classic' ? 'Georgia, serif' : 
-                               selectedTemplate === 'academic' ? 'Times New Roman, serif' :
-                               'system-ui, sans-serif'
+                  className="prose prose-lg max-w-none"
+                  dangerouslySetInnerHTML={{
+                    __html: formatter.renderToHTML(formattedSections, uploadedImages)
                   }}
-                >
-                  {text.split('\n').map((line, index) => {
-                    // Handle empty lines as spacers
-                    if (!line.trim()) {
-                      return <div key={index} className="h-4"></div>;
-                    }
-                    
-                    // Handle chapter titles
-                    if (line.toLowerCase().startsWith('chapter ') || line.match(/^chapter\s+\d+/i)) {
-                      return (
-                        <h2 key={index} className="text-2xl font-bold mb-6 mt-8 first:mt-0 text-center text-gray-900">
-                          {line}
-                        </h2>
-                      );
-                    }
-                    
-                    // Handle book titles (first non-empty line or lines that look like titles)
-                    if (index === 0 || (line.length < 50 && !line.includes('.') && line === line.toUpperCase())) {
-                      return (
-                        <h1 key={index} className="text-3xl font-bold mb-8 mt-4 text-center text-gray-900">
-                          {line}
-                        </h1>
-                      );
-                    }
-                    
-                    // Handle image placeholders
-                    if (line.startsWith('[IMAGE:') || line.startsWith('[FULLPAGE:')) {
-                      const isFullPage = line.startsWith('[FULLPAGE:');
-                      const filename = line.match(/\[(?:IMAGE|FULLPAGE):(.+?)\]/)?.[1];
-                      
-                      if (filename && uploadedImages[filename]) {
-                        return (
-                          <div key={index} className={`my-6 ${isFullPage ? 'text-center' : 'inline-block mr-4 float-left'}`}>
-                            <img 
-                              src={uploadedImages[filename]} 
-                              alt={filename}
-                              className={isFullPage ? 'max-w-full h-auto mx-auto rounded-lg shadow-md' : 'w-32 h-32 object-cover rounded-lg shadow-md'}
-                            />
-                          </div>
-                        );
-                      } else {
-                        return (
-                          <div key={index} className={`my-4 p-4 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg text-center ${isFullPage ? 'block' : 'inline-block mr-4 w-32'}`}>
-                            <div className="text-gray-500">
-                              <svg className="mx-auto h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              <p className="text-sm font-medium">{isFullPage ? 'Full Page' : 'Inline'} Image</p>
-                              <p className="text-xs">{filename || 'Image placeholder'}</p>
-                            </div>
-                          </div>
-                        );
-                      }
-                    }
-                    
-                    // Regular text lines
-                    return (
-                      <p key={index} className="mb-3 leading-relaxed text-gray-800">
-                        {line}
-                      </p>
-                    );
-                  })}
-                </div>
+                />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-gray-400">
                   <svg className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

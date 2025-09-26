@@ -1,0 +1,333 @@
+/* Enhanced Template Styles - Inspired by TextDoc's bestseller formatting */
+
+/* Import better fonts */
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&family=Source+Serif+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+
+/* Enhanced Classic Template - Premium book feeling */
+.template-classic {
+  font-family: 'Crimson Text', 'Georgia', 'Times New Roman', serif;
+  line-height: 1.8;
+  color: #2c2c2c;
+  font-size: 18px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.template-classic h1 {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-weight: 700;
+  font-size: 2.8em;
+  line-height: 1.2;
+  margin: 3rem 0 2rem 0;
+  text-align: center;
+  color: #1a1a1a;
+  letter-spacing: -0.02em;
+}
+
+.template-classic h2 {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-weight: 600;
+  font-size: 2.2em;
+  line-height: 1.3;
+  margin: 4rem 0 2.5rem 0;
+  text-align: center;
+  color: #1a1a1a;
+  page-break-before: always;
+  border-bottom: 3px solid #f0f0f0;
+  padding-bottom: 1rem;
+  position: relative;
+}
+
+.template-classic h2::after {
+  content: '\2766';
+  position: absolute;
+  bottom: -0.8rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 0 1rem;
+  font-size: 1.2rem;
+  color: #888;
+}
+
+.template-classic p {
+  margin: 1.5rem 0;
+  text-align: justify;
+  text-indent: 2rem;
+  hyphens: auto;
+  word-spacing: 0.1em;
+}
+
+.template-classic p:first-of-type,
+.template-classic h1 + p,
+.template-classic h2 + p {
+  text-indent: 0;
+  margin-top: 2rem;
+}
+
+/* Enhanced Modern Template - Clean contemporary style */
+.template-modern {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  line-height: 1.7;
+  color: #333;
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: -0.011em;
+}
+
+.template-modern h1 {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 2.5em;
+  line-height: 1.15;
+  margin: 2.5rem 0 1.5rem 0;
+  text-align: center;
+  color: #1a1a1a;
+  letter-spacing: -0.025em;
+}
+
+.template-modern h2 {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 1.8em;
+  line-height: 1.25;
+  margin: 3rem 0 1.5rem 0;
+  text-align: left;
+  color: #2563eb;
+  padding-left: 1rem;
+  border-left: 4px solid #2563eb;
+  page-break-before: always;
+}
+
+.template-modern p {
+  margin: 1.3rem 0;
+  text-align: left;
+  line-height: 1.7;
+}
+
+.template-modern p:first-of-type,
+.template-modern h1 + p,
+.template-modern h2 + p {
+  margin-top: 2rem;
+}
+
+/* Enhanced Elegant Template - Sophisticated literary style */
+.template-elegant {
+  font-family: 'Source Serif Pro', 'Georgia', serif;
+  line-height: 1.9;
+  color: #1a1a1a;
+  font-size: 19px;
+  font-weight: 400;
+}
+
+.template-elegant h1 {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-weight: 400;
+  font-size: 3em;
+  line-height: 1.1;
+  margin: 4rem 0 2rem 0;
+  text-align: center;
+  color: #0f172a;
+  letter-spacing: 0.02em;
+  font-style: italic;
+}
+
+.template-elegant h2 {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-weight: 600;
+  font-size: 2em;
+  line-height: 1.3;
+  margin: 4rem 0 2rem 0;
+  text-align: center;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 1.4em;
+  page-break-before: always;
+}
+
+.template-elegant p {
+  margin: 1.8rem 0;
+  text-align: justify;
+  text-indent: 1.8rem;
+  hyphens: auto;
+}
+
+.template-elegant p:first-of-type,
+.template-elegant h1 + p,
+.template-elegant h2 + p {
+  text-indent: 0;
+  margin-top: 2.5rem;
+}
+
+/* Enhanced Sci-Fi Template - Futuristic technical style */
+.template-scifi {
+  font-family: 'Inter', 'SF Mono', monospace;
+  line-height: 1.6;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 300;
+  letter-spacing: 0.025em;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 2rem;
+  border-radius: 1rem;
+}
+
+.template-scifi h1 {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 2.2em;
+  line-height: 1.2;
+  margin: 2rem 0 1.5rem 0;
+  text-align: center;
+  color: #1e40af;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  position: relative;
+}
+
+.template-scifi h1::before {
+  content: '\25e6\25e6\25e6';
+  display: block;
+  color: #64748b;
+  font-size: 0.3em;
+  margin-bottom: 1rem;
+  letter-spacing: 0.5em;
+}
+
+.template-scifi h2 {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 1.5em;
+  line-height: 1.3;
+  margin: 3rem 0 1.5rem 0;
+  text-align: left;
+  color: #1e40af;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 1rem 0;
+  border-top: 2px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  page-break-before: always;
+}
+
+.template-scifi p {
+  margin: 1.4rem 0;
+  text-align: justify;
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+/* Enhanced image styling for all templates */
+.template-classic img,
+.template-modern img,
+.template-elegant img,
+.template-scifi img {
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.template-classic img:hover,
+.template-modern img:hover,
+.template-elegant img:hover,
+.template-scifi img:hover {
+  transform: scale(1.02);
+}
+
+/* Full page images */
+.template-classic .image-fullpage,
+.template-modern .image-fullpage,
+.template-elegant .image-fullpage,
+.template-scifi .image-fullpage {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 3rem auto;
+  page-break-inside: avoid;
+}
+
+/* Inline images */
+.template-classic .image-inline,
+.template-modern .image-inline,
+.template-elegant .image-inline,
+.template-scifi .image-inline {
+  float: left;
+  width: 250px;
+  height: 250px;
+  object-fit: cover;
+  margin: 0 2rem 1.5rem 0;
+  shape-outside: margin-box;
+}
+
+/* Print styles for better export */
+@media print {
+  .template-classic,
+  .template-modern,
+  .template-elegant,
+  .template-scifi {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+  
+  .template-classic h1,
+  .template-modern h1,
+  .template-elegant h1,
+  .template-scifi h1 {
+    page-break-after: avoid;
+  }
+  
+  .template-classic h2,
+  .template-modern h2,
+  .template-elegant h2,
+  .template-scifi h2 {
+    page-break-before: always;
+    page-break-after: avoid;
+  }
+  
+  .template-classic p,
+  .template-modern p,
+  .template-elegant p,
+  .template-scifi p {
+    page-break-inside: avoid;
+    orphans: 3;
+    widows: 3;
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .template-classic,
+  .template-modern,
+  .template-elegant,
+  .template-scifi {
+    font-size: 16px;
+    padding: 1rem;
+  }
+  
+  .template-classic h1,
+  .template-modern h1,
+  .template-elegant h1,
+  .template-scifi h1 {
+    font-size: 2em;
+  }
+  
+  .template-classic h2,
+  .template-modern h2,
+  .template-elegant h2,
+  .template-scifi h2 {
+    font-size: 1.5em;
+  }
+  
+  .template-classic .image-inline,
+  .template-modern .image-inline,
+  .template-elegant .image-inline,
+  .template-scifi .image-inline {
+    float: none;
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 1.5rem 0;
+  }
+}
