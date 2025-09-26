@@ -9,7 +9,6 @@ import { useToast, ToastContainer } from './components/Toast';
 import { parseDocument, validateFileSize, isSupportedFileType } from './utils/documentParser';
 import { createFormatter, FormattedSection } from './utils/textFormatter';
 
-
 const App: React.FC = () => {
   const [text, setText] = useState<string>('');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('classic');
@@ -69,7 +68,6 @@ const App: React.FC = () => {
       }
     }, 100);
   };
-
 
   const handleSampleText = () => {
     const sampleText = `My Amazing Novel
@@ -150,10 +148,9 @@ The room was exactly as her grandmother had described it - filled with countless
     }
   };
 
-
   return (
     <div className="min-h-screen bg-[#1A1A1A] text-gray-200 flex flex-col font-sans relative">
-      {/* Dark Theme Header - Remove sticky positioning */}
+      {/* Header - Remove sticky positioning */}
       <header className="bg-[#1A1A1A] border-b border-gray-800">
         <div className="flex items-center justify-between px-8 py-5">
           <div className="flex items-center gap-3">
@@ -179,7 +176,7 @@ The room was exactly as her grandmother had described it - filled with countless
         </div>
       </header>
 
-      {/* Plan Ribbon / Upgrade CTA - Remove sticky positioning */}
+      {/* Plan Ribbon - Remove sticky positioning */}
       <div className="border-b border-gray-800 bg-gradient-to-r from-[#1E1E1E] to-[#1E1E1E]/60">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between text-sm">
           <div className="text-gray-400">
@@ -291,7 +288,7 @@ The room was exactly as her grandmother had described it - filled with countless
             </div>
           </div>
           
-          {/* Right Panel - Live Preview */}
+          {/* Right Panel - Live Preview with fixed height scrolling */}
           <div className="bg-gray-800 rounded-2xl p-8 border border-gray-600 flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-white">Live Preview</h3>
