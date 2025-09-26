@@ -20,7 +20,8 @@ const DownloadButton: React.FC<DownloadButtonProps> = ({
     try {
       setIsDownloading(format);
       
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      // Use relative path for production (Vercel) or localhost for development
+      const apiUrl = process.env.NODE_ENV === 'production' ? '' : (process.env.REACT_APP_API_URL || 'http://localhost:5000');
       const response = await fetch(`${apiUrl}/api/generate-${format}`, {
         method: 'POST',
         headers: {
