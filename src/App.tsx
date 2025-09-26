@@ -82,18 +82,45 @@ The room was exactly as her grandmother had described it - filled with countless
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      if (content) {
-        setText(content);
-        toast.showSuccess(
-          'File uploaded successfully!',
-          `Loaded "${file.name}" with ${content.split('\n').length} lines.`
-        );
-      }
-    };
-    reader.readAsText(file);
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    
+    // Only handle text files directly
+    if (fileExtension === 'txt') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        if (content) {
+          // Clean the content to remove any potential encoding issues
+          const cleanContent = content
+            .replace(/\r\n/g, '\n') // Normalize line endings
+            .replace(/\r/g, '\n')
+            .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '') // Remove control characters
+            .trim();
+            
+          setText(cleanContent);
+          toast.showSuccess(
+            'File uploaded successfully!',
+            `Loaded "${file.name}" with ${cleanContent.split('\n').length} lines.`
+          );
+        }
+      };
+      reader.readAsText(file, 'UTF-8'); // Explicitly specify UTF-8 encoding
+    } else if (fileExtension === 'docx' || fileExtension === 'doc' || fileExtension === 'pdf') {
+      // For binary files, show a message that they need to be converted first
+      toast.showError(
+        'File type not directly supported',
+        `${fileExtension?.toUpperCase()} files need to be converted to text first. Please save your document as a .txt file and upload it again.`
+      );
+      // Clear the input
+      event.target.value = '';
+    } else {
+      toast.showError(
+        'Unsupported file type',
+        'Please upload a .txt file for direct text processing.'
+      );
+      // Clear the input
+      event.target.value = '';
+    }
   };
 
 
@@ -156,7 +183,7 @@ The room was exactly as her grandmother had described it - filled with countless
                 <div className="space-y-3">
                   <input
                     type="file"
-                    accept=".txt,.docx,.doc,.pdf"
+                    accept=".txt"
                     onChange={handleFileUpload}
                     className="hidden"
                     id="file-upload"
@@ -169,8 +196,8 @@ The room was exactly as her grandmother had described it - filled with countless
                       <svg className="mx-auto h-8 w-8 text-cyan-400 group-hover:text-cyan-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                       </svg>
-                      <p className="text-cyan-400 group-hover:text-cyan-300 font-medium">Upload file or drag & drop</p>
-                      <p className="text-gray-400 text-xs mt-1">TXT, DOCX, DOC, PDF up to 10MB</p>
+                      <p className="text-cyan-400 group-hover:text-cyan-300 font-medium">Upload text file or drag & drop</p>
+                      <p className="text-gray-400 text-xs mt-1">TXT files up to 10MB</p>
                     </div>
                   </label>
                   
@@ -245,7 +272,7 @@ The room was exactly as her grandmother had described it - filled with countless
               </div>
             </div>
             
-            <div className="bg-white rounded-xl p-8 min-h-[500px] shadow-inner overflow-auto">
+            <div className="bg-white rounded-xl p-8 h-[600px] max-h-[600px] shadow-inner overflow-y-auto overflow-x-hidden">
               {text.trim() ? (
                 <div 
                   className={`prose prose-lg max-w-none ${
@@ -257,20 +284,34 @@ The room was exactly as her grandmother had described it - filled with countless
                                'system-ui, sans-serif'
                   }}
                 >
-                  {text.split('\n\n').map((paragraph, index) => {
+                  {text.split('\n').map((line, index) => {
+                    // Handle empty lines as spacers
+                    if (!line.trim()) {
+                      return <div key={index} className="h-4"></div>;
+                    }
+                    
                     // Handle chapter titles
-                    if (paragraph.toLowerCase().startsWith('chapter ')) {
+                    if (line.toLowerCase().startsWith('chapter ') || line.match(/^chapter\s+\d+/i)) {
                       return (
-                        <h2 key={index} className="text-2xl font-bold mb-6 mt-8 first:mt-0 text-center">
-                          {paragraph}
+                        <h2 key={index} className="text-2xl font-bold mb-6 mt-8 first:mt-0 text-center text-gray-900">
+                          {line}
                         </h2>
                       );
                     }
                     
+                    // Handle book titles (first non-empty line or lines that look like titles)
+                    if (index === 0 || (line.length < 50 && !line.includes('.') && line === line.toUpperCase())) {
+                      return (
+                        <h1 key={index} className="text-3xl font-bold mb-8 mt-4 text-center text-gray-900">
+                          {line}
+                        </h1>
+                      );
+                    }
+                    
                     // Handle image placeholders
-                    if (paragraph.startsWith('[IMAGE:') || paragraph.startsWith('[FULLPAGE:')) {
-                      const isFullPage = paragraph.startsWith('[FULLPAGE:');
-                      const filename = paragraph.match(/\[(?:IMAGE|FULLPAGE):(.+?)\]/)?.[1];
+                    if (line.startsWith('[IMAGE:') || line.startsWith('[FULLPAGE:')) {
+                      const isFullPage = line.startsWith('[FULLPAGE:');
+                      const filename = line.match(/\[(?:IMAGE|FULLPAGE):(.+?)\]/)?.[1];
                       
                       if (filename && uploadedImages[filename]) {
                         return (
@@ -297,15 +338,12 @@ The room was exactly as her grandmother had described it - filled with countless
                       }
                     }
                     
-                    // Regular paragraphs
-                    if (paragraph.trim()) {
-                      return (
-                        <p key={index} className="mb-4 leading-relaxed text-gray-800">
-                          {paragraph}
-                        </p>
-                      );
-                    }
-                    return null;
+                    // Regular text lines
+                    return (
+                      <p key={index} className="mb-3 leading-relaxed text-gray-800">
+                        {line}
+                      </p>
+                    );
                   })}
                 </div>
               ) : (
