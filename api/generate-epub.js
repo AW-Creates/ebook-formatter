@@ -21,13 +21,11 @@ export default function handler(req, res) {
     return;
   }
 
-  // Simulate processing time
-  setTimeout(() => {
-    res.status(200).json({
-      success: true,
-      message: 'EPUB generation complete',
-      filename: `${title.replace(/[^a-z0-9]/gi, '_')}.epub`,
-      note: 'This is a demo response. In production, actual EPUB file would be generated.'
-    });
-  }, 2000);
+  // Return immediate response (simulating processing)
+  res.status(200).json({
+    success: true,
+    message: 'EPUB generation complete',
+    filename: `${title.replace(/[^a-z0-9]/gi, '_')}.epub`,
+    note: 'This is a demo response. In production, actual EPUB file would be generated.'
+  });
 }
