@@ -182,10 +182,10 @@ The room was exactly as her grandmother had described it - filled with countless
           </div>
         </div>
         <nav className="space-x-8 text-sm font-medium">
-          <a href="#" className="hover:text-cyan-400 transition">Pricing</a>
-          <a href="#" className="hover:text-cyan-400 transition">Docs</a>
-          <a href="#" className="hover:text-cyan-400 transition">Help</a>
-          <a href="#" className="hover:text-cyan-400 transition">Login</a>
+          <button className="hover:text-cyan-400 transition">Pricing</button>
+          <button className="hover:text-cyan-400 transition">Docs</button>
+          <button className="hover:text-cyan-400 transition">Help</button>
+          <button className="hover:text-cyan-400 transition">Login</button>
         </nav>
       </header>
 
