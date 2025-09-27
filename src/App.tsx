@@ -1,16 +1,257 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css';
 import './styles/modern.css';
 import './styles/brand.css';
 import './styles/enhanced-templates.css';
+
+// Types
+interface ManuscriptFile {
+  name: string
+  size: number
+  type: string
+  content: string
+  uploadedAt: Date
+}
+
+interface FormattingSettings {
+  template: string
+  trimSize: string
+  fontPreset: string
+  margins: {
+    top: number
+    bottom: number
+    inner: number
+    outer: number
+  }
+  styleFrom: 'catalog' | 'upload' | 'blank'
+  similarity: number
+  locks: {
+    fonts: boolean
+    trim: boolean
+    margins: boolean
+  }
+  guides: {
+    margins: boolean
+    bleed: boolean
+    safeArea: boolean
+    baselineGrid: boolean
+  }
+}
+
+interface AppState {
+  manuscript: ManuscriptFile | null
+  isProcessing: boolean
+  processingStep: string
+  error: string | null
+  previewData: any[]
+  currentPage: number
+  totalPages: number
+  zoom: number
+  viewMode: 'ebook' | 'print'
+  showGuides: boolean
+}
 
 export default function EbookFormatterUI() {
   // UI state (default CLOSED per user requirements)
   const [isGalleryOpen, setGalleryOpen] = useState(false)
   const [isExportOpen, setExportOpen] = useState(false)
   const [isPreflightOpen, setPreflightOpen] = useState(false)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+  
+  // File upload ref
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Main application state
+  const [appState, setAppState] = useState<AppState>({
+    manuscript: null,
+    isProcessing: false,
+    processingStep: '',
+    error: null,
+    previewData: [],
+    currentPage: 1,
+    totalPages: 248,
+    zoom: 100,
+    viewMode: 'ebook',
+    showGuides: true
+  })
+  
+  // Formatting settings state
+  const [settings, setSettings] = useState<FormattingSettings>({
+    template: 'Classic Novel',
+    trimSize: '6 x 9 in (Standard Paperback)',
+    fontPreset: 'Literary Serif — (Merriweather + Source Sans)',
+    margins: {
+      top: 0.75,
+      bottom: 0.75,
+      inner: 0.75,
+      outer: 0.5
+    },
+    styleFrom: 'catalog',
+    similarity: 65,
+    locks: {
+      fonts: false,
+      trim: false,
+      margins: false
+    },
+    guides: {
+      margins: true,
+      bleed: true,
+      safeArea: true,
+      baselineGrid: false
+    }
+  })
 
+  // File handling functions
+  const handleFileSelect = useCallback((files: FileList | null) => {
+    if (!files || files.length === 0) return
+    
+    const file = files[0]
+    
+    // Validate file type
+    const allowedTypes = ['text/plain', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/markdown']
+    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(txt|docx|md)$/i)) {
+      setAppState(prev => ({ ...prev, error: 'Please select a .txt, .docx, or .md file' }))
+      return
+    }
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setAppState(prev => ({ ...prev, error: 'File size must be less than 10MB' }))
+      return
+    }
+    
+    setAppState(prev => ({ 
+      ...prev, 
+      isProcessing: true, 
+      processingStep: 'Reading file...', 
+      error: null 
+    }))
+    
+    // Read file content
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const content = e.target?.result as string
+      const manuscript: ManuscriptFile = {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        content: content,
+        uploadedAt: new Date()
+      }
+      
+      setAppState(prev => ({
+        ...prev,
+        manuscript,
+        isProcessing: false,
+        processingStep: '',
+        totalPages: Math.ceil(content.length / 2000) // Rough estimate
+      }))
+      
+      showToastNotification(`${file.name} uploaded successfully!`)
+    }
+    
+    reader.onerror = () => {
+      setAppState(prev => ({ 
+        ...prev, 
+        isProcessing: false, 
+        error: 'Failed to read file' 
+      }))
+    }
+    
+    reader.readAsText(file)
+  }, [])
+  
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'copy'
+  }, [])
+  
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    handleFileSelect(e.dataTransfer.files)
+  }, [handleFileSelect])
+  
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+  
+  const loadSampleManuscript = useCallback(() => {
+    const sampleContent = `Chapter 1: The Beginning
+
+This is a sample manuscript to demonstrate the ebook formatter. It contains multiple paragraphs, chapters, and formatting elements that will be processed and formatted according to your chosen template.
+
+The formatter handles various text elements including headings, body text, and scene breaks. Each element is styled according to professional publishing standards.
+
+Chapter 2: The Development
+
+As the story progresses, the formatting system maintains consistent spacing, typography, and layout throughout the document. This ensures a professional appearance in both digital and print formats.
+
+The system supports various output formats including PDF for print and EPUB for digital distribution.`
+    
+    const manuscript: ManuscriptFile = {
+      name: 'sample-manuscript.txt',
+      size: sampleContent.length,
+      type: 'text/plain',
+      content: sampleContent,
+      uploadedAt: new Date()
+    }
+    
+    setAppState(prev => ({
+      ...prev,
+      manuscript,
+      totalPages: Math.ceil(sampleContent.length / 2000)
+    }))
+    
+    showToastNotification('Sample manuscript loaded!')
+  }, [])
+  
+  // Settings update functions
+  const updateSettings = useCallback((updates: Partial<FormattingSettings>) => {
+    setSettings(prev => ({ ...prev, ...updates }))
+  }, [])
+  
+  const updateMargin = useCallback((margin: keyof FormattingSettings['margins'], value: number) => {
+    setSettings(prev => ({
+      ...prev,
+      margins: { ...prev.margins, [margin]: value }
+    }))
+  }, [])
+  
+  const toggleLock = useCallback((lock: keyof FormattingSettings['locks']) => {
+    setSettings(prev => ({
+      ...prev,
+      locks: { ...prev.locks, [lock]: !prev.locks[lock] }
+    }))
+  }, [])
+  
+  const toggleGuide = useCallback((guide: keyof FormattingSettings['guides']) => {
+    setSettings(prev => ({
+      ...prev,
+      guides: { ...prev.guides, [guide]: !prev.guides[guide] }
+    }))
+  }, [])
+  
+  // Preview functions
+  const updateZoom = useCallback((newZoom: number) => {
+    setAppState(prev => ({ ...prev, zoom: Math.max(25, Math.min(400, newZoom)) }))
+  }, [])
+  
+  const goToPage = useCallback((page: number) => {
+    setAppState(prev => ({ 
+      ...prev, 
+      currentPage: Math.max(1, Math.min(prev.totalPages, page)) 
+    }))
+  }, [])
+  
+  // Toast notification
+  const showToastNotification = useCallback((message: string) => {
+    setToastMessage(message)
+    setShowToast(true)
+    setTimeout(() => setShowToast(false), 4000)
+  }, [])
+  
   // Keyboard shortcuts: G (gallery), E (export), P (preflight)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -63,38 +304,120 @@ export default function EbookFormatterUI() {
           {/* ===== Left Side: Upload + Options ===== */}
           <div>
             {/* Upload Box */}
-            <div className="border-2 border-dashed border-cyan-400 rounded-2xl p-14 text-center hover:bg-[#272727] cursor-pointer transition" aria-label="Upload manuscript">
-              <svg className="mx-auto mb-4 h-12 w-12 text-cyan-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4-4m0 0l-4 4m4-4v12" />
-              </svg>
-              <p className="text-lg font-medium">Drag & drop your manuscript</p>
-              <p className="text-sm text-gray-500 mt-1">or click to browse</p>
-              <div className="mt-4">
-                <button className="text-xs px-3 py-1.5 rounded-lg border border-gray-700 text-gray-300 hover:border-cyan-400 hover:text-cyan-300 transition">
-                  Use Sample Manuscript
-                </button>
-              </div>
+            <div 
+              onClick={handleUploadClick}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-2xl p-14 text-center cursor-pointer transition ${
+                appState.manuscript 
+                  ? 'border-green-400 bg-green-400/10' 
+                  : appState.error 
+                  ? 'border-red-400 bg-red-400/10'
+                  : 'border-cyan-400 hover:bg-[#272727]'
+              }`} 
+              aria-label="Upload manuscript"
+            >
+              {appState.isProcessing ? (
+                <>
+                  <div className="mx-auto mb-4 h-12 w-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-lg font-medium">{appState.processingStep}</p>
+                  <p className="text-sm text-gray-500 mt-1">Please wait...</p>
+                </>
+              ) : appState.manuscript ? (
+                <>
+                  <svg className="mx-auto mb-4 h-12 w-12 text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-lg font-medium text-green-400">{appState.manuscript.name}</p>
+                  <p className="text-sm text-gray-500 mt-1">{(appState.manuscript.size / 1024).toFixed(1)} KB • {appState.totalPages} pages estimated</p>
+                  <p className="text-xs text-gray-400 mt-2">Click to upload a different file</p>
+                </>
+              ) : appState.error ? (
+                <>
+                  <svg className="mx-auto mb-4 h-12 w-12 text-red-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-lg font-medium text-red-400">Upload Error</p>
+                  <p className="text-sm text-red-300 mt-1">{appState.error}</p>
+                  <p className="text-xs text-gray-400 mt-2">Click to try again</p>
+                </>
+              ) : (
+                <>
+                  <svg className="mx-auto mb-4 h-12 w-12 text-cyan-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4-4m0 0l-4 4m4-4v12" />
+                  </svg>
+                  <p className="text-lg font-medium">Drag & drop your manuscript</p>
+                  <p className="text-sm text-gray-500 mt-1">or click to browse (.txt, .docx, .md)</p>
+                </>
+              )}
+              
+              {!appState.isProcessing && (
+                <div className="mt-4">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); loadSampleManuscript(); }}
+                    className="text-xs px-3 py-1.5 rounded-lg border border-gray-700 text-gray-300 hover:border-cyan-400 hover:text-cyan-300 transition"
+                  >
+                    Use Sample Manuscript
+                  </button>
+                </div>
+              )}
             </div>
+            
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".txt,.docx,.md,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/markdown"
+              onChange={(e) => handleFileSelect(e.target.files)}
+              className="hidden"
+            />
 
-            {/* Progress Bar Placeholder */}
-            <div className="mt-6 h-2 w-full bg-gray-700 rounded-full overflow-hidden" aria-hidden>
-              <div className="h-2 w-1/3 bg-cyan-400 animate-pulse"></div>
-            </div>
+            {/* Progress Bar */}
+            {appState.isProcessing ? (
+              <div className="mt-6 h-2 w-full bg-gray-700 rounded-full overflow-hidden">
+                <div className="h-2 w-full bg-cyan-400 animate-pulse"></div>
+              </div>
+            ) : appState.manuscript ? (
+              <div className="mt-6 h-2 w-full bg-gray-700 rounded-full overflow-hidden">
+                <div className="h-2 w-full bg-green-400 transition-all duration-500"></div>
+              </div>
+            ) : null}
 
             {/* ===== Style From (Style DNA) ===== */}
             <div className="mt-12 space-y-6">
               <h3 className="text-sm font-semibold text-gray-200">Style From</h3>
               <div className="grid grid-cols-1 gap-3 text-sm">
                 <div className="flex items-center gap-2">
-                  <input id="style-catalog" name="styleFrom" type="radio" defaultChecked className="accent-cyan-400" />
+                  <input 
+                    id="style-catalog" 
+                    name="styleFrom" 
+                    type="radio" 
+                    checked={settings.styleFrom === 'catalog'}
+                    onChange={() => updateSettings({ styleFrom: 'catalog' })}
+                    className="accent-cyan-400" 
+                  />
                   <label htmlFor="style-catalog" className="text-gray-300">Pick from Catalog <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-gray-800 border border-gray-700 text-gray-400">Inspired by</span></label>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input id="style-upload" name="styleFrom" type="radio" className="accent-cyan-400" />
+                  <input 
+                    id="style-upload" 
+                    name="styleFrom" 
+                    type="radio" 
+                    checked={settings.styleFrom === 'upload'}
+                    onChange={() => updateSettings({ styleFrom: 'upload' })}
+                    className="accent-cyan-400" 
+                  />
                   <label htmlFor="style-upload" className="text-gray-300">Upload Reference (3–10 pages PDF) <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-gray-800 border border-gray-700 text-gray-400">Adaptive</span></label>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input id="style-blank" name="styleFrom" type="radio" className="accent-cyan-400" />
+                  <input 
+                    id="style-blank" 
+                    name="styleFrom" 
+                    type="radio" 
+                    checked={settings.styleFrom === 'blank'}
+                    onChange={() => updateSettings({ styleFrom: 'blank' })}
+                    className="accent-cyan-400" 
+                  />
                   <label htmlFor="style-blank" className="text-gray-300">Start from Blank</label>
                 </div>
               </div>
@@ -103,15 +426,38 @@ export default function EbookFormatterUI() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-sm text-gray-400">Similarity</label>
-                  <div className="text-xs text-gray-500">Exact ↔ Adaptive</div>
+                  <div className="text-xs text-gray-500">Exact ↔ Adaptive ({settings.similarity}%)</div>
                 </div>
-                <input type="range" min="0" max="100" defaultValue="65" className="w-full accent-cyan-400" aria-label="Similarity" />
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100" 
+                  value={settings.similarity}
+                  onChange={(e) => updateSettings({ similarity: parseInt(e.target.value) })}
+                  className="w-full accent-cyan-400" 
+                  aria-label="Similarity" 
+                />
               </div>
 
               {/* Lock Toggles */}
               <div className="flex flex-wrap gap-2">
-                {['Lock Fonts','Lock Trim','Lock Margins'].map((t)=> (
-                  <button key={t} className="px-3 py-1.5 rounded-lg border border-gray-700 text-xs text-gray-300 hover:border-cyan-400 hover:text-cyan-300 transition" aria-pressed="false">{t}</button>
+                {[
+                  { label: 'Lock Fonts', key: 'fonts' as const },
+                  { label: 'Lock Trim', key: 'trim' as const },
+                  { label: 'Lock Margins', key: 'margins' as const }
+                ].map(({ label, key }) => (
+                  <button 
+                    key={key}
+                    onClick={() => toggleLock(key)}
+                    className={`px-3 py-1.5 rounded-lg border text-xs transition ${
+                      settings.locks[key] 
+                        ? 'border-cyan-400 bg-cyan-400/20 text-cyan-300' 
+                        : 'border-gray-700 text-gray-300 hover:border-cyan-400 hover:text-cyan-300'
+                    }`} 
+                    aria-pressed={settings.locks[key]}
+                  >
+                    {label}
+                  </button>
                 ))}
               </div>
 
@@ -125,10 +471,16 @@ export default function EbookFormatterUI() {
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Choose Template</label>
                 <div className="flex gap-3">
-                  <select className="w-full bg-[#1A1A1A] border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                  <select 
+                    value={settings.template}
+                    onChange={(e) => updateSettings({ template: e.target.value })}
+                    className="w-full bg-[#1A1A1A] border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  >
                     <option>Classic Novel</option>
                     <option>Modern Non-Fiction</option>
                     <option>Academic</option>
+                    <option>Poetry Collection</option>
+                    <option>Technical Manual</option>
                   </select>
                   <button onClick={() => setGalleryOpen(true)} className="shrink-0 px-4 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition text-sm">Gallery</button>
                 </div>
@@ -137,21 +489,34 @@ export default function EbookFormatterUI() {
               {/* Trim Size */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Trim Size</label>
-                <select className="w-full bg-[#1A1A1A] border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                <select 
+                  value={settings.trimSize}
+                  onChange={(e) => updateSettings({ trimSize: e.target.value })}
+                  className="w-full bg-[#1A1A1A] border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                >
                   <option>6 x 9 in (Standard Paperback)</option>
-                  <option>5.5 x 8.5 in</option>
-                  <option>8.5 x 11 in</option>
+                  <option>5.5 x 8.5 in (Digest)</option>
+                  <option>5 x 8 in (Mass Market)</option>
+                  <option>7 x 10 in (Royal)</option>
+                  <option>8.5 x 11 in (Letter)</option>
+                  <option>6.14 x 9.21 in (A5)</option>
                 </select>
               </div>
 
               {/* Font Presets */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Font Presets</label>
-                <select className="w-full bg-[#1A1A1A] border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                <select 
+                  value={settings.fontPreset}
+                  onChange={(e) => updateSettings({ fontPreset: e.target.value })}
+                  className="w-full bg-[#1A1A1A] border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                >
                   <option>Literary Serif — (Merriweather + Source Sans)</option>
                   <option>Clean Sans — (Inter + Inter)</option>
                   <option>Humanist — (Source Serif + Source Sans)</option>
                   <option>Typewriter — (IBM Plex Mono + Inter)</option>
+                  <option>Classic — (EB Garamond + Source Sans)</option>
+                  <option>Modern — (Poppins + Open Sans)</option>
                 </select>
                 <p className="mt-2 text-xs text-gray-500">All fonts are open‑source and print‑safe.</p>
               </div>
@@ -161,14 +526,22 @@ export default function EbookFormatterUI() {
                 <label className="block text-sm text-gray-400 mb-3">Margins (in)</label>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   {[
-                    { label: 'Top', val: '0.75' },
-                    { label: 'Bottom', val: '0.75' },
-                    { label: 'Inner', val: '0.75' },
-                    { label: 'Outer', val: '0.5' },
-                  ].map(({label,val}) => (
+                    { label: 'Top', key: 'top' as const },
+                    { label: 'Bottom', key: 'bottom' as const },
+                    { label: 'Inner', key: 'inner' as const },
+                    { label: 'Outer', key: 'outer' as const },
+                  ].map(({label, key}) => (
                     <div key={label} className="flex items-center justify-between bg-[#1A1A1A] border border-gray-700 rounded-lg px-3 py-2">
                       <span className="text-gray-400">{label}</span>
-                      <input className="w-20 bg-transparent text-right focus:outline-none" defaultValue={val} />
+                      <input 
+                        type="number"
+                        min="0.1"
+                        max="2"
+                        step="0.05"
+                        value={settings.margins[key]}
+                        onChange={(e) => updateMargin(key, parseFloat(e.target.value) || 0.1)}
+                        className="w-20 bg-transparent text-right focus:outline-none text-gray-200" 
+                      />
                     </div>
                   ))}
                 </div>
@@ -178,8 +551,23 @@ export default function EbookFormatterUI() {
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Guides</label>
                 <div className="flex flex-wrap gap-2">
-                  {['Margins','Bleed','Safe Area','Baseline Grid'].map((g) => (
-                    <button key={g} className="px-3 py-1.5 rounded-lg border border-gray-700 text-gray-300 hover:border-cyan-400 hover:text-cyan-300 transition text-xs">{g}</button>
+                  {[
+                    { label: 'Margins', key: 'margins' as const },
+                    { label: 'Bleed', key: 'bleed' as const },
+                    { label: 'Safe Area', key: 'safeArea' as const },
+                    { label: 'Baseline Grid', key: 'baselineGrid' as const }
+                  ].map(({ label, key }) => (
+                    <button 
+                      key={key}
+                      onClick={() => toggleGuide(key)}
+                      className={`px-3 py-1.5 rounded-lg border text-xs transition ${
+                        settings.guides[key] 
+                          ? 'border-cyan-400 bg-cyan-400/20 text-cyan-300' 
+                          : 'border-gray-700 text-gray-300 hover:border-cyan-400 hover:text-cyan-300'
+                      }`}
+                    >
+                      {label}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -226,8 +614,26 @@ export default function EbookFormatterUI() {
             <div className="flex items-center justify-between gap-3 border-b border-gray-700 px-4 py-3 bg-[#1E1E1E] sticky top-0">
               {/* View Mode Toggle */}
               <div className="inline-flex rounded-xl overflow-hidden border border-gray-700">
-                <button className="px-3 py-2 text-sm bg-cyan-400/20 text-cyan-300 hover:bg-cyan-400/30 transition">Ebook</button>
-                <button className="px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 transition">Print</button>
+                <button 
+                  onClick={() => setAppState(prev => ({ ...prev, viewMode: 'ebook' }))}
+                  className={`px-3 py-2 text-sm transition ${
+                    appState.viewMode === 'ebook' 
+                      ? 'bg-cyan-400/20 text-cyan-300' 
+                      : 'text-gray-300 hover:bg-gray-800'
+                  }`}
+                >
+                  Ebook
+                </button>
+                <button 
+                  onClick={() => setAppState(prev => ({ ...prev, viewMode: 'print' }))}
+                  className={`px-3 py-2 text-sm transition ${
+                    appState.viewMode === 'print' 
+                      ? 'bg-cyan-400/20 text-cyan-300' 
+                      : 'text-gray-300 hover:bg-gray-800'
+                  }`}
+                >
+                  Print
+                </button>
               </div>
 
               {/* Two-page toggle (print) */}
@@ -239,11 +645,31 @@ export default function EbookFormatterUI() {
 
               {/* Zoom Controls */}
               <div className="flex items-center gap-2">
-                <button className="h-9 w-9 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition grid place-items-center">–</button>
-                <div className="px-3 py-1.5 text-sm text-gray-300 bg-[#2A2A2A] rounded-md">100%</div>
-                <button className="h-9 w-9 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition grid place-items-center">+</button>
-                <button className="ml-2 px-3 py-2 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition text-sm">Fit Width</button>
-                <button className="px-3 py-2 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition text-sm">Fit Height</button>
+                <button 
+                  onClick={() => updateZoom(appState.zoom - 25)}
+                  className="h-9 w-9 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition grid place-items-center"
+                >
+                  –
+                </button>
+                <div className="px-3 py-1.5 text-sm text-gray-300 bg-[#2A2A2A] rounded-md">{appState.zoom}%</div>
+                <button 
+                  onClick={() => updateZoom(appState.zoom + 25)}
+                  className="h-9 w-9 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition grid place-items-center"
+                >
+                  +
+                </button>
+                <button 
+                  onClick={() => updateZoom(100)}
+                  className="ml-2 px-3 py-2 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition text-sm"
+                >
+                  Fit Width
+                </button>
+                <button 
+                  onClick={() => updateZoom(75)}
+                  className="px-3 py-2 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition text-sm"
+                >
+                  Fit Height
+                </button>
                 {/* Preflight toggle */}
                 <button onClick={() => setPreflightOpen(true)} className="ml-2 px-3 py-2 rounded-lg border border-amber-500/50 text-amber-300 hover:border-amber-400 transition text-sm">Preflight</button>
               </div>
@@ -326,13 +752,37 @@ export default function EbookFormatterUI() {
             <div className="flex items-center justify-between border-t border-gray-800 px-4 py-3 bg-[#1E1E1E]">
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <span>Page</span>
-                <input className="w-14 bg-[#2A2A2A] border border-gray-700 rounded-md px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-cyan-400" defaultValue={1} />
-                <span>of 248</span>
+                <input 
+                  type="number"
+                  min="1"
+                  max={appState.totalPages}
+                  value={appState.currentPage}
+                  onChange={(e) => goToPage(parseInt(e.target.value) || 1)}
+                  className="w-14 bg-[#2A2A2A] border border-gray-700 rounded-md px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-cyan-400 text-gray-200" 
+                />
+                <span>of {appState.totalPages}</span>
               </div>
               <div className="flex items-center gap-2">
-                <button className="px-3 py-2 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition text-sm">Prev</button>
-                <button className="px-3 py-2 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition text-sm">Next</button>
-                <button className="ml-2 px-3 py-2 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition text-sm">Page Flip</button>
+                <button 
+                  onClick={() => goToPage(appState.currentPage - 1)}
+                  disabled={appState.currentPage <= 1}
+                  className="px-3 py-2 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Prev
+                </button>
+                <button 
+                  onClick={() => goToPage(appState.currentPage + 1)}
+                  disabled={appState.currentPage >= appState.totalPages}
+                  className="px-3 py-2 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+                <button 
+                  onClick={() => showToastNotification('Page flip animation coming soon!')}
+                  className="ml-2 px-3 py-2 rounded-lg border border-gray-700 hover:border-cyan-400 hover:text-cyan-300 transition text-sm"
+                >
+                  Page Flip
+                </button>
               </div>
             </div>
           </div>
@@ -471,19 +921,26 @@ export default function EbookFormatterUI() {
         </aside>
       )}
 
-      {/* ===== Success Toast (visible mock) ===== */}
-      <div className="fixed bottom-6 right-6 z-50" aria-live="polite">
-        <div className="bg-[#1E1E1E] border border-gray-700 rounded-xl shadow-xl px-4 py-3 flex items-start gap-3">
-          <div className="h-6 w-6 rounded-full bg-cyan-400/20 border border-cyan-400/40 grid place-items-center">
-            <span className="text-cyan-300 text-sm">✓</span>
+      {/* ===== Toast Notification ===== */}
+      {showToast && (
+        <div className="fixed bottom-6 right-6 z-50" aria-live="polite">
+          <div className="bg-[#1E1E1E] border border-gray-700 rounded-xl shadow-xl px-4 py-3 flex items-start gap-3 animate-slide-in">
+            <div className="h-6 w-6 rounded-full bg-cyan-400/20 border border-cyan-400/40 grid place-items-center">
+              <span className="text-cyan-300 text-sm">✓</span>
+            </div>
+            <div className="text-sm">
+              <div className="text-gray-100 font-medium">{toastMessage}</div>
+            </div>
+            <button 
+              onClick={() => setShowToast(false)}
+              className="ml-2 text-gray-400 hover:text-gray-200 transition"
+              aria-label="Close notification"
+            >
+              ×
+            </button>
           </div>
-          <div className="text-sm">
-            <div className="text-gray-100 font-medium">Export complete</div>
-            <div className="text-gray-400">Your PDF is ready to download.</div>
-          </div>
-          <button className="ml-2 text-sm px-3 py-1.5 rounded-lg bg-cyan-400 text-black font-semibold hover:bg-cyan-300 transition">Open</button>
         </div>
-      </div>
+      )}
 
       {/* ===== Footer ===== */}
       <footer className="px-8 py-8 border-t border-gray-700 text-center text-gray-500 text-sm z-10">
