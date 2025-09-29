@@ -252,10 +252,29 @@ The system supports various output formats including PDF for print and EPUB for 
     }))
   }, [])
   
-  // Keyboard shortcuts: G (gallery), E (export), P (preflight)
+  // Body scroll prevention when modals are open
+  useEffect(() => {
+    const isAnyModalOpen = isGalleryOpen || isExportOpen || isPreflightOpen
+    if (isAnyModalOpen) {
+      document.body.classList.add('modal-open')
+    } else {
+      document.body.classList.remove('modal-open')
+    }
+    return () => document.body.classList.remove('modal-open')
+  }, [isGalleryOpen, isExportOpen, isPreflightOpen])
+
+  // Keyboard shortcuts: G (gallery), E (export), P (preflight), ESC (close modals)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target && (e.target as HTMLElement).tagName === 'INPUT') return
+      
+      if (e.key === 'Escape') {
+        setGalleryOpen(false)
+        setExportOpen(false)
+        setPreflightOpen(false)
+        return
+      }
+      
       if (e.key.toLowerCase() === 'g') setGalleryOpen((v) => !v)
       if (e.key.toLowerCase() === 'e') setExportOpen((v) => !v)
       if (e.key.toLowerCase() === 'p') setPreflightOpen((v) => !v)
@@ -267,7 +286,7 @@ The system supports various output formats including PDF for print and EPUB for 
   return (
     <div className="min-h-screen bg-[#1A1A1A] text-gray-200 flex flex-col font-sans relative">
       {/* ===== Header ===== */}
-      <header className="flex items-center justify-between px-8 py-5 border-b border-gray-700 bg-[#1E1E1E]/80 backdrop-blur-md sticky top-0 z-30">
+      <header className="flex items-center justify-between px-8 py-5 border-b border-gray-700 bg-[#1E1E1E]/80 backdrop-blur-md sticky top-0 z-10">
         <div className="flex items-center gap-3">
           {/* Brand Logo (swap with your SVG/PNG) */}
           <div className="h-8 w-8 rounded-xl bg-cyan-400 grid place-items-center text-black font-extrabold">Ef</div>
@@ -291,7 +310,7 @@ The system supports various output formats including PDF for print and EPUB for 
       </header>
 
       {/* ===== Plan Ribbon / Upgrade CTA ===== */}
-      <div className="sticky top-[68px] z-20 border-b border-gray-800 bg-gradient-to-r from-[#1E1E1E] to-[#1E1E1E]/60">
+      <div className="sticky top-[68px] z-10 border-b border-gray-800 bg-gradient-to-r from-[#1E1E1E] to-[#1E1E1E]/60">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between text-sm">
           <div className="text-gray-400">You're on <span className="text-gray-200 font-medium">Free</span> · Pro unlocks additional templates, DOCX export, and brand presets.</div>
           <div className="flex items-center gap-2">
@@ -795,7 +814,7 @@ The system supports various output formats including PDF for print and EPUB for 
 
       {/* ===== Template Gallery Modal ===== */}
       {isGalleryOpen && (
-        <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 modal-overlay" onClick={(e) => e.target === e.currentTarget && setGalleryOpen(false)}>
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 modal-overlay" onClick={(e) => e.target === e.currentTarget && setGalleryOpen(false)}>
           <div className="w-full max-w-5xl max-h-[90vh] bg-[#1E1E1E] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col modal-content">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
               <h3 className="text-lg font-semibold text-cyan-300">Template Gallery</h3>
@@ -839,8 +858,8 @@ The system supports various output formats including PDF for print and EPUB for 
 
       {/* ===== Export Panel (bottom sheet) ===== */}
       {isExportOpen && (
-        <div className="fixed bottom-0 left-0 right-0 z-[55] bg-black/40 backdrop-blur-sm modal-overlay" onClick={(e) => e.target === e.currentTarget && setExportOpen(false)}>
-          <div className="mx-auto w-full max-w-6xl bg-[#1E1E1E] border-t border-gray-700 rounded-t-2xl shadow-2xl p-6 m-4 mb-0 modal-content">
+        <div className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-sm flex items-end justify-center p-6 modal-overlay" onClick={(e) => e.target === e.currentTarget && setExportOpen(false)}>
+          <div className="w-full max-w-6xl bg-[#1E1E1E] border border-gray-700 rounded-2xl shadow-2xl p-6 modal-content">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h4 className="font-semibold text-cyan-300">Export</h4>
@@ -879,8 +898,8 @@ The system supports various output formats including PDF for print and EPUB for 
       {/* ===== Preflight Drawer ===== */}
       {isPreflightOpen && (
         <>
-          <div className="fixed inset-0 z-[50] bg-black/40 backdrop-blur-sm" onClick={() => setPreflightOpen(false)}></div>
-          <aside className="fixed right-0 top-[112px] bottom-0 w-full sm:w-[380px] z-[55] bg-[#1E1E1E] border-l border-gray-700 shadow-2xl p-5 overflow-y-auto modal-content modal-scroll" aria-label="Preflight">
+          <div className="fixed inset-0 z-[9997] bg-black/40 backdrop-blur-sm" onClick={() => setPreflightOpen(false)}></div>
+          <aside className="fixed right-0 top-0 bottom-0 w-full sm:w-[380px] z-[9998] bg-[#1E1E1E] border-l border-gray-700 shadow-2xl p-5 overflow-y-auto modal-content modal-scroll" aria-label="Preflight">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-amber-300">Preflight</h4>
             <button onClick={() => setPreflightOpen(false)} className="text-xs px-2 py-1 rounded-lg border border-gray-700 text-gray-300 hover:border-cyan-400 hover:text-cyan-300 transition">Close</button>
@@ -930,7 +949,7 @@ The system supports various output formats including PDF for print and EPUB for 
 
       {/* ===== Toast Notification ===== */}
       {showToast && (
-        <div className="fixed bottom-6 right-6 z-[70]" aria-live="polite">
+        <div className="fixed bottom-6 right-6 z-[10000]" aria-live="polite">
           <div className="bg-[#1E1E1E] border border-gray-700 rounded-xl shadow-xl px-4 py-3 flex items-start gap-3 toast-notification">
             <div className="h-6 w-6 rounded-full bg-cyan-400/20 border border-cyan-400/40 grid place-items-center">
               <span className="text-cyan-300 text-sm">✓</span>
@@ -950,7 +969,7 @@ The system supports various output formats including PDF for print and EPUB for 
       )}
 
       {/* ===== Footer ===== */}
-      <footer className="px-8 py-8 border-t border-gray-700 text-center text-gray-500 text-sm z-10">
+      <footer className="px-8 py-8 border-t border-gray-700 text-center text-gray-500 text-sm z-0">
         © {new Date().getFullYear()} Ebook Formatter. All rights reserved.
       </footer>
 
