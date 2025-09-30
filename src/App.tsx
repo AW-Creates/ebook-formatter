@@ -286,7 +286,7 @@ The system supports various output formats including PDF for print and EPUB for 
   return (
     <div className="min-h-screen bg-[#1A1A1A] text-gray-200 flex flex-col font-sans relative">
       {/* ===== Header ===== */}
-      <header className="flex items-center justify-between px-8 py-5 border-b border-gray-700 bg-[#1E1E1E]/80 backdrop-blur-md sticky top-0 z-10">
+      <header className="flex items-center justify-between px-8 py-5 border-b border-gray-700 bg-[#1E1E1E] sticky top-0 z-10">
         <div className="flex items-center gap-3">
           {/* Brand Logo (swap with your SVG/PNG) */}
           <div className="h-8 w-8 rounded-xl bg-cyan-400 grid place-items-center text-black font-extrabold">Ef</div>
@@ -310,7 +310,7 @@ The system supports various output formats including PDF for print and EPUB for 
       </header>
 
       {/* ===== Plan Ribbon / Upgrade CTA ===== */}
-      <div className="sticky top-[68px] z-10 border-b border-gray-800 bg-gradient-to-r from-[#1E1E1E] to-[#1E1E1E]/60">
+      <div className="sticky top-[68px] z-10 border-b border-gray-800 bg-[#1E1E1E]">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between text-sm">
           <div className="text-gray-400">You're on <span className="text-gray-200 font-medium">Free</span> · Pro unlocks additional templates, DOCX export, and brand presets.</div>
           <div className="flex items-center gap-2">
@@ -814,7 +814,7 @@ The system supports various output formats including PDF for print and EPUB for 
 
       {/* ===== Template Gallery Modal ===== */}
       {isGalleryOpen && (
-        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 modal-overlay" onClick={(e) => e.target === e.currentTarget && setGalleryOpen(false)}>
+        <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 modal-overlay" onClick={(e) => e.target === e.currentTarget && setGalleryOpen(false)}>
           <div className="w-full max-w-5xl max-h-[90vh] bg-[#1E1E1E] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col modal-content">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
               <h3 className="text-lg font-semibold text-cyan-300">Template Gallery</h3>
@@ -858,7 +858,7 @@ The system supports various output formats including PDF for print and EPUB for 
 
       {/* ===== Export Panel (bottom sheet) ===== */}
       {isExportOpen && (
-        <div className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-sm flex items-end justify-center p-6 modal-overlay" onClick={(e) => e.target === e.currentTarget && setExportOpen(false)}>
+        <div className="fixed inset-0 z-[9998] bg-black/75 backdrop-blur-sm flex items-center justify-center p-6 modal-overlay" onClick={(e) => e.target === e.currentTarget && setExportOpen(false)}>
           <div className="w-full max-w-6xl bg-[#1E1E1E] border border-gray-700 rounded-2xl shadow-2xl p-6 modal-content">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
@@ -898,7 +898,7 @@ The system supports various output formats including PDF for print and EPUB for 
       {/* ===== Preflight Drawer ===== */}
       {isPreflightOpen && (
         <>
-          <div className="fixed inset-0 z-[9997] bg-black/40 backdrop-blur-sm" onClick={() => setPreflightOpen(false)}></div>
+          <div className="fixed inset-0 z-[9997] bg-black/75 backdrop-blur-sm" onClick={() => setPreflightOpen(false)}></div>
           <aside className="fixed right-0 top-0 bottom-0 w-full sm:w-[380px] z-[9998] bg-[#1E1E1E] border-l border-gray-700 shadow-2xl p-5 overflow-y-auto modal-content modal-scroll" aria-label="Preflight">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-amber-300">Preflight</h4>

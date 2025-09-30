@@ -108,6 +108,28 @@ body.modal-open {
   background: #5a5a5a;
 }
 
+/* Ensure buttons and interactive elements have proper isolation */
+button {
+  position: relative;
+  z-index: auto;
+}
+
+/* Prevent text overlap in sticky elements */
+.sticky {
+  backdrop-filter: none;
+  background-clip: padding-box;
+}
+
+/* Ensure proper layering for interactive elements */
+.modal-content button {
+  z-index: 1;
+}
+
+/* Fix any potential tooltip or popup issues */
+[title]:hover::after {
+  z-index: 10001;
+}
+
 /* Preview container scrolling */
 .preview-container {
   height: 500px;
